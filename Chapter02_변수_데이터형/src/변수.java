@@ -65,9 +65,49 @@
  *       단어 두개 이상 
  *       firstName
  *       first_name   
+ *       
+ *       
+ *       int math=90;
+ *       int eng=30;
+ *       char c1='홍';
+ *       String name="홍길동";
+ *       
+ *       byte < char < int < long < float < double
+ *       
+ *       1byte = 8bit 0과1이 8개
  */
 public class 변수 {
 	public static void main(String[] args) {
+		//System.out.println(0101);
+		
+		byte byteValue=127;
+		int intValue=10;
+		long longValue=10L;  //L 생략 가능 인트기때문에
+		float floatValue=10.5F; //F는 생략 불가능 D이기떄문에 D>F
+		double doubleValue=10.5D;
+		boolean booleanValue=true;
+		char charValue='A';
+		
+		System.out.println("byteValue="+byteValue);
+		System.out.println("intValue="+intValue);
+		
+		double d=100; //자동 형 변환
+
+		
+		
+		// 정수 int 실수 double 존재 boolean 
+//		long : AI , 데이터가 많은 경우
+//		전송 (네트워크) -> byte
+//		형변환 -> 데이터형을 변경 
+		/*/
+		 * 자동 형변황 : UpCasting
+		 * 작은 데이터를 큰 데이터에 저장
+		 * long a=10 롱으로 변경
+		 * dluble d=10L double로 변경
+		 * 
+		 * 강제 형변환  DownCasting
+		 *  int a=10.5   (int)10.5   a=10
+		 */
 		
 	}
 
