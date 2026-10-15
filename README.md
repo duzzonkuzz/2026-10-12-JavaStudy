@@ -1,13 +1,10 @@
-# 부트캠프 
+# Read me 
 
-
-> IT 부트캠프에서 배운 내용을 주제별로 정리한 저장소입니다.  
-> 항목을 클릭하면 내용이 펼쳐집니다.
 
 <br>
 
 <details>
-<summary><b>☕ Java</b></summary>
+<summary><b> Java</b></summary>
 
 <br>
 
