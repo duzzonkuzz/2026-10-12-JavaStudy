@@ -168,7 +168,6 @@ int a = scan.nextInt();   // 입력한 정수를 a에 저장
 ```
 
 - Scanner는 java.util에 있어서 import가 필요하다.
-- 이클립스에서 Ctrl + Shift + O 누르면 import 자동 추가
 
 </details>
 
@@ -283,7 +282,7 @@ System.out.println(a);               // 5
 
 - 단일 조건문: if
 - 선택 조건문: if~else
-- 다중 조건문: if~else if~else
+- 다중 조건문: if~else / if~else
 
 #### 단일 조건문 (if)
 
@@ -329,7 +328,7 @@ if (isMember) {
 }
 ```
 
-#### 다중 조건문 (if~else if~else)
+#### 다중 조건문 (if~else / if~else)
 
 위에서부터 차례로 검사하다가 처음으로 true인 블록 하나만 실행하고 빠져나온다. 전부 false면 else를 실행한다.
 
