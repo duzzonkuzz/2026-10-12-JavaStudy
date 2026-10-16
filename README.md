@@ -282,7 +282,7 @@ System.out.println(a);               // 5
 
 - 단일 조건문: if
 - 선택 조건문: if~else
-- 다중 조건문: if~else / if~else
+- 다중 조건문: if else / if else
 
 #### 단일 조건문 (if)
 
