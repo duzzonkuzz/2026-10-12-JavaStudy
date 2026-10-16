@@ -349,4 +349,123 @@ if (score >= 90) {
 
 </details>
 
+<details>
+<summary>08. 제어문 (2) switch문 (10.16)</summary>
+
+#### 랜덤 숫자 만들기
+
+```java
+int month = (int)(Math.random() * 12) + 1;   // 1~12
+```
+
+- Math.random(): 0.0 이상 1.0 미만의 실수
+- `* 12` → 0.0 ~ 11.9xx
+- `(int)` → 소수점을 버려서 0 ~ 11
+- `+ 1` → 1 ~ 12
+
+#### 다중 조건문 예제 (계절)
+
+```java
+if (month == 12 || month == 1 || month == 2) {
+    System.out.println(month + "월은 겨울입니다.");
+} else if (month >= 3 && month <= 5) {
+    System.out.println(month + "월은 봄입니다.");
+} else if (month >= 6 && month <= 8) {
+    System.out.println(month + "월은 여름입니다.");
+} else if (month >= 9 && month <= 11) {
+    System.out.println(month + "월은 가을입니다.");
+} else {
+    System.out.println("없는 달입니다.");
+}
+```
+
+#### switch문
+
+값이 같은지(==)만 비교해서 맞는 case를 실행한다. 범위 비교(>=, <=)가 필요하면 if를 쓴다.
+
+```java
+switch (month) {
+    case 3: case 4: case 5:
+        System.out.println(month + "월은 봄입니다.");
+        break;
+    case 6: case 7: case 8:
+        System.out.println(month + "월은 여름입니다.");
+        break;
+    case 9: case 10: case 11:
+        System.out.println(month + "월은 가을입니다.");
+        break;
+    case 12: case 1: case 2:
+        System.out.println(month + "월은 겨울입니다.");
+        break;
+    default:
+        System.out.println("없는 달입니다.");
+}
+```
+
+- case를 여러 개 이어 쓰면 그중 하나만 맞아도 실행된다.
+- break: switch를 빠져나간다. break가 없으면 그 아래 case 문장까지 이어서 실행된다.
+- default: 맞는 case가 없을 때 실행된다. (if문의 else 역할)
+
+#### 화살표 switch (Java 14 이상)
+
+```java
+switch (month) {
+    case 12, 1, 2 -> System.out.println(month + "월은 겨울입니다.");
+    case 3, 4, 5 -> System.out.println(month + "월은 봄입니다.");
+    case 6, 7, 8 -> System.out.println(month + "월은 여름입니다.");
+    case 9, 10, 11 -> System.out.println(month + "월은 가을입니다.");
+    default -> System.out.println("없는 달입니다.");
+}
+```
+
+- case 값은 쉼표로 묶는다.
+- 해당 case만 실행하고 끝나기 때문에 break가 필요 없다.
+
+#### 중괄호 { }
+
+모든 제어문은 { }가 없으면 바로 밑에 있는 문장 1개만 제어한다. 문장이 여러 개면 { }로 묶어야 하고, 1개여도 { }를 쓰는 게 기본이다.
+
+```java
+if (hp <= 0)
+    System.out.println("게임 오버");   // if에 포함
+    System.out.println("다시 시작");   // if와 상관없이 항상 실행
+```
+
+#### Scanner 입력 메소드
+
+- 정수: nextInt()
+- 실수: nextDouble()
+- 논리: nextBoolean()
+- 문자열: next() / nextLine()
+  - next(): 띄어쓰기 전까지 한 단어
+  - nextLine(): 엔터 전까지 한 줄 전체
+- 문자(char)를 받는 메소드는 없다. 문자열로 받아서 charAt(0)으로 첫 글자를 꺼낸다.
+
+#### 예제: 입력한 문자 판별
+
+```java
+Scanner scan = new Scanner(System.in);
+System.out.println("문자 입력");
+char c = scan.next().charAt(0);   // 입력한 문자열의 첫 글자
+
+if (c >= 'A' && c <= 'Z') {
+    System.out.println(c + " : 대문자");
+}
+if (c >= 'a' && c <= 'z') {
+    System.out.println(c + " : 소문자");
+}
+if (c >= '0' && c <= '9') {
+    System.out.println(c + " : 숫자");
+}
+if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))) {
+    System.out.println(c + " : 기타");
+}
+```
+
+- char는 내부적으로 유니코드 숫자로 저장돼서 >=, <=로 비교할 수 있다. ('A' = 65, 'a' = 97, '0' = 48)
+- 마지막 if는 위의 세 조건이 전부 아닐 때 → 기타
+- if 4개가 독립적이라 매번 4번 다 검사한다. else if로 바꾸면 맞는 곳에서 바로 끝나고, 마지막은 else 하나로 처리할 수 있다.
+
+</details>
+
 </details>
