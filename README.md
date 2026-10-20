@@ -540,4 +540,167 @@ do {
 참고: print는 줄바꿈 없이 이어서 출력하고, println은 출력한 뒤 줄을 바꾼다.
 
 </details>
+<details>
+<summary>10. 제어문 (4) break, continue (10.20)</summary>
+
+```java
+for (int i = 1; i <= 10; i++) {
+    if (i == 5) {
+        break;       // 반복문을 완전히 빠져나간다
+    }
+    System.out.print(i + " ");
+}
+// 1 2 3 4
+
+for (int i = 1; i <= 10; i++) {
+    if (i % 2 == 0) {
+        continue;    // 이번 회차만 건너뛰고 다음 반복으로
+    }
+    System.out.print(i + " ");
+}
+// 1 3 5 7 9
+```
+
+- break: 반복문(또는 switch)을 종료한다. (예: ESC 누르면 종료)
+- continue: 아래 문장을 건너뛰고 다음 반복으로 넘어간다. (특정 부분만 제외)
+- while에서 continue를 쓸 때 i++가 continue 뒤에 있으면 i가 안 올라가서 무한 반복된다.
+
+</details>
+
+<details>
+<summary>11. String (10.20)</summary>
+
+#### String 특징
+
+- 여러 개의 문자를 저장하는 클래스. 문자열은 `""`, 문자는 `''`
+- 일반 데이터형처럼 쓰지만 참조형이다.
+- final 클래스라서 상속해서 고쳐 쓸 수 없고, 제공하는 메소드를 그대로 사용한다. (표준화)
+- 문자열 값 자체도 바뀌지 않는다. toUpperCase(), replace() 같은 메소드는 원본을 바꾸는 게 아니라 새 문자열을 만들어서 돌려준다.
+
+#### 메모리 저장
+
+```
+String s = "Java";
+
+  Stack           Heap
+ -------        -------
+ s: 0x100  ──▶  0x100: "Java"
+```
+
+- 변수 s(Stack)에는 주소만 있고, 실제 데이터는 Heap에 있다.
+- Heap에 저장은 new로 하고, 해제는 GC가 자동으로 한다. (C는 malloc() / free()로 직접 해제)
+
+#### == 와 equals()
+
+```java
+String a = "Java";
+String b = "Java";
+String c = new String("Java");
+
+a == b        // true   같은 문자열 리터럴은 주소가 같다
+a == c        // false  new는 새 메모리 공간을 만든다
+a.equals(c)   // true   내용 비교
+```
+
+- `==`는 주소 비교, `equals()`는 내용 비교
+- 문자열 비교는 항상 equals()를 쓴다. (로그인, 아이디 중복 체크)
+
+#### 메소드 원형 읽는 법
+
+```
+char  charAt  (int index)
+리턴형  메소드명   매개변수
+```
+
+int를 넣으면 char를 돌려준다는 뜻.
+
+#### index
+
+```
+H  e  l  l  o     J  a  v  a
+0  1  2  3  4  5  6  7  8  9
+```
+
+문자열의 index는 0부터 시작한다. (공백도 1칸)
+
+#### 주요 메소드
+
+| 원형 | 기능 |
+|---|---|
+| `char charAt(int index)` | index 위치의 문자 |
+| `int length()` | 문자 개수 |
+| `boolean equals(String s)` | 내용이 같은지 |
+| `boolean equalsIgnoreCase(String s)` | 대소문자 구분 없이 비교 |
+| `boolean contains(String s)` | 포함하는지 |
+| `boolean startsWith(String s)` | ~로 시작하는지 |
+| `boolean endsWith(String s)` | ~로 끝나는지 |
+| `String toUpperCase()` / `toLowerCase()` | 대문자 / 소문자로 변환 |
+| `String replace(old, new)` | 문자, 문자열 바꾸기 |
+| `String replaceAll(정규식, new)` | 정규식에 맞는 부분 전부 바꾸기 |
+| `String substring(int start)` | start부터 끝까지 자르기 |
+| `String substring(int start, int end)` | start ~ end-1 자르기 |
+| `int indexOf(String s)` | 처음 나오는 위치 (없으면 -1) |
+| `int lastIndexOf(String s)` | 마지막으로 나오는 위치 (없으면 -1) |
+
+#### 변환
+
+```java
+String ms = "Hello Java";
+ms.toUpperCase()               // "HELLO JAVA"
+ms.replace('a', 'b')           // "Hello Jbvb"
+ms.replace("Java", "Oracle")   // "Hello Oracle"
+System.out.println(ms);        // "Hello Java"  원본은 그대로
+```
+
+#### replaceAll + 정규식
+
+```java
+String s = "ABCD가나다라1234";
+s.replaceAll("[가-힣]", "")    // "ABCD1234"      한글 전체 삭제
+s.replaceAll("[A-Z]", "")      // "가나다라1234"   대문자 전체 삭제
+s.replaceAll("[0-9]", "")      // "ABCD가나다라"   숫자 전체 삭제
+s.replaceAll("[^가-힣]", "")   // "가나다라"       한글 빼고 전부 삭제
+```
+
+- `[가-힣]` 한글, `[A-Z]` 대문자, `[a-z]` 소문자, `[0-9]` 숫자
+- `[^ ]` 괄호 안에 있는 것 제외
+- `{1,3}` 1~3번 반복, `\.` 점 문자 그대로
+- IP 주소: `[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}` (자바 문자열 안에서는 `\\.`로 쓴다)
+
+#### substring + indexOf
+
+```java
+String msg = "hello Java";
+msg.substring(6)       // "Java"
+msg.substring(0, 5)    // "hello"  (0~4, 끝 번호는 포함 안 함)
+
+String s = "자바.java";
+s.substring(s.indexOf(".") + 1)               // "java"  점 다음부터
+
+String path = "c:\\javaDev\\MainClass.java";  // \\는 \ 한 글자
+path.substring(path.lastIndexOf("\\") + 1)    // "MainClass.java"  파일명만 추출
+```
+
+#### 활용: 웹 크롤링 (Jsoup)
+
+```java
+String fd = JOptionPane.showInputDialog("검색어 입력:");
+for (int i = 1; i <= 4; i++) {
+    Document doc = Jsoup.connect("https://www.genie.co.kr/chart/top200?ditc=D&ymd=20261020&hh=14&rtm=Y&pg=" + i).get();
+    Elements title = doc.select("table.list-wrap td.info a.title");   // 제목
+    Elements singer = doc.select("table.list-wrap a.artist");         // 가수명
+
+    for (int j = 0; j < title.size(); j++) {
+        if (title.get(j).text().endsWith(fd)) {
+            System.out.println(title.get(j).text() + "(" + singer.get(j).text() + ")");
+        }
+    }
+}
+```
+
+- 지니 차트 1~4페이지를 가져와서 검색어로 끝나는 제목만 출력
+- 검색어가 들어간 곡을 전부 찾으려면 endsWith 대신 contains
+- Jsoup 라이브러리(jar)를 추가해야 사용할 수 있다.
+
+</details>
 </details>
