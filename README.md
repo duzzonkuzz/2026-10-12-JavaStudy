@@ -703,4 +703,166 @@ for (int i = 1; i <= 4; i++) {
 - Jsoup 라이브러리(jar)를 추가해야 사용할 수 있다.
 
 </details>
+<details>
+<summary>12. String (2), 메소드 (10.21)</summary>
+
+#### 추가 메소드
+
+| 원형 | 기능 |
+|---|---|
+| `String trim()` / `strip()` | 좌우 공백 제거 |
+| `String valueOf(값)` | 모든 데이터형을 문자열로 변환 |
+| `String[] split(String s)` | 지정한 문자로 잘라서 배열에 저장 |
+| `String join(구분자, 문자열...)` | 여러 문자열을 하나로 묶기 |
+| `String format(형식, 값...)` | 형식에 맞게 문자열 만들기 (printf와 같은 형식) |
+| `String concat(String s)` | 문자열 결합 (거의 안 쓰고 + 사용) |
+
+```java
+"  Java  ".trim()                        // "Java"
+String.valueOf(10)                       // "10"
+"red,green,blue".split(",")              // {"red", "green", "blue"}
+String.join("-", "2026", "10", "21")     // "2026-10-21"
+String.format("%.2f", 3.14159)           // "3.14"
+```
+
+- valueOf, join, format은 `String.메소드()`로 호출한다.
+- split에 `.`을 쓸 때는 `"\\."`로 써야 한다. (그냥 `"."`은 정규식에서 모든 문자라는 뜻)
+
+#### 메소드
+
+특정 기능을 수행하는 명령문의 집합. 라이브러리는 자바에서 만든 클래스이고, 메소드는 그 클래스의 기능이다.
+
+```java
+int add(int a, int b) {    // 리턴형 메소드명(매개변수)
+    return a + b;          // 리턴형과 같은 데이터형으로 돌려준다
+}
+
+int c = add(10, 20);       // 호출할 때는 리턴형을 빼고 쓴다 → 30
+```
+
+- 결과값이 없는 메소드는 리턴형이 void
+- 메소드 쓸 때 확인할 것: 어떤 클래스 → 어떤 기능 → 매개변수 → 리턴형 → 호출 방법
+- 오버로딩: 이름은 같고 매개변수가 다른 메소드 여러 개 (valueOf(int), valueOf(double) ...)
+
+</details>
+
+<details>
+<summary>13. 배열 (10.21)</summary>
+
+#### 배열
+
+같은 데이터형의 데이터 여러 개를 모아서 관리한다. (다른 데이터형을 모으면 클래스, 크기가 변하는 건 컬렉션: ArrayList 등)
+
+- 특징: 연속된 메모리라 index로 접근, 크기 고정(선언 후 변경 불가, 늘리려면 더 큰 배열로 복사), 같은 데이터형만 저장
+- 장점: 접근이 빠르다, 구조가 단순하다, 메모리 사용량을 예측할 수 있다
+- 단점: 추가 / 삭제가 어렵다, 크게 만들면 메모리 낭비, 유연성이 떨어진다
+
+#### 선언과 초기화
+
+```java
+int[] a = {10, 20, 30};        // 선언과 동시에 초기화 (값을 알 때)
+int[] b = new int[3];          // 기본값으로 생성 (가장 많이 사용) → {0, 0, 0}
+int[] c;
+c = new int[]{10, 20, 30};     // 선언 먼저, 초기화는 나중에
+```
+
+`int a[]`도 되지만 C 방식이다.
+
+new로 만들면 들어가는 기본값
+
+| int | long | double | char | boolean | String (참조형) |
+|---|---|---|---|---|---|
+| 0 | 0L | 0.0 | '\u0000' | false | null |
+
+null은 주소가 없다는 뜻이고, null인 상태로 사용하면 NullPointerException이 난다.
+
+#### 메모리
+
+```
+int[] arr = {10, 20, 30};
+
+  Stack            Heap
+ ---------        ----------------
+ arr: 0x200  ──▶  0x200: [10][20][30]
+                          0   1   2
+```
+
+#### for vs for-each
+
+```java
+for (int i = 0; i < arr.length; i++) {     // index로 접근 → 값 변경 가능
+    System.out.print(arr[i] + " ");
+}
+
+for (int n : arr) {                         // 데이터를 하나씩 꺼낸다 → 출력용
+    System.out.print(n + " ");
+}
+
+System.out.println(Arrays.toString(arr));   // [10, 20, 30]
+```
+
+- 배열 크기는 `arr.length` (String은 `length()`, 배열은 괄호 없음)
+- 값을 바꿀 때는 일반 for, 출력만 할 때는 for-each
+- Arrays를 쓰려면 `import java.util.Arrays;`
+
+#### 예제: 최대값, 최소값과 위치
+
+```java
+int max = arr[0];   // 0이 아니라 첫 번째 값으로 시작해야 한다
+int min = arr[0];
+for (int n : arr) {
+    if (n > max) max = n;
+    if (n < min) min = n;
+}
+
+for (int i = 0; i < arr.length; i++) {
+    if (arr[i] == max) {
+        System.out.println("max 위치: " + (i + 1));
+        break;      // 처음 찾은 위치에서 종료
+    }
+}
+```
+
+#### 예제: 성적 처리
+
+```java
+int[] kor = new int[3];        // int kor1, kor2, kor3 대신
+int[] total = new int[3];
+double[] avg = new double[3];
+char[] score = new char[3];
+
+// 반복문 안에서
+total[i] = kor[i] + eng[i] + math[i];
+avg[i] = total[i] / 3.0;       // 3.0으로 나눠야 소수점까지 나온다
+switch (total[i] / 30) {       // 300점 만점 → 0~10
+    case 10, 9 -> score[i] = 'A';
+    case 8, 7 -> score[i] = 'B';
+    case 6, 5 -> score[i] = 'C';
+    case 4, 3 -> score[i] = 'D';
+    default -> score[i] = 'F';
+}
+
+System.out.printf("%-5d%-5d%-5d%-7d%-7.2f%-5c\n",
+        kor[i], eng[i], math[i], total[i], avg[i], score[i]);
+```
+
+printf: `%d` 정수, `%f` 실수, `%c` 문자, `-5`는 왼쪽 정렬 5칸, `.2`는 소수점 둘째 자리까지
+
+#### 예제: 로또 (중복 없는 번호)
+
+```java
+int[] lotto = new int[6];
+for (int i = 0; i < lotto.length; i++) {
+    lotto[i] = (int)(Math.random() * 45 + 1);   // 1~45
+    for (int j = 0; j < i; j++) {               // 앞에서 뽑은 번호와 비교
+        if (lotto[i] == lotto[j]) {
+            i--;     // 중복이면 i를 하나 줄여서 같은 자리를 다시 뽑는다
+            break;
+        }
+    }
+}
+Arrays.sort(lotto);  // 오름차순 정렬
+```
+
+</details>
 </details>
