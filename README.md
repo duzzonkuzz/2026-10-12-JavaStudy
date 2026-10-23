@@ -865,4 +865,173 @@ Arrays.sort(lotto);  // 오름차순 정렬
 ```
 
 </details>
+<details>
+<summary>16. 문자열 배열 - 파일 데이터 다루기 (10.23)</summary>
+
+movie.txt는 한 줄이 영화 1개이고, 항목은 `|`로 구분돼 있다.
+
+```
+1|쇼생크 탈출|드라마|이미지주소|출연진|개봉일|15세 관람가|감독
+```
+
+#### 파일 → 배열
+
+```java
+FileReader fr = new FileReader("c:\\javaDev\\movie.txt");
+StringBuffer sb = new StringBuffer();
+int i = 0;
+while ((i = fr.read()) != -1) {     // 한 글자씩 읽기, 파일 끝이면 -1
+    sb.append((char) i);
+}
+fr.close();
+
+String[] movies = sb.toString().split("\n");     // 줄 단위 → 영화 1개씩
+String[] title = new String[movies.length];
+String[] actor = new String[movies.length];
+
+for (int j = 0; j < movies.length; j++) {
+    String[] data = movies[j].split("\\|");      // 항목 단위
+    title[j] = data[1];
+    actor[j] = data[4];
+}
+```
+
+- 파일 읽기는 try~catch로 감싸야 한다. (파일이 없을 수도 있어서)
+- StringBuffer: 문자열을 계속 이어 붙일 때 사용한다. (String에 +=를 하면 매번 새 문자열이 만들어진다)
+- 배열 크기는 1938처럼 직접 쓰지 말고 movies.length로
+
+#### 검색
+
+```java
+int count = 0;
+for (int j = 0; j < actor.length; j++) {
+    if (actor[j].contains(ac)) {     // 입력한 배우 이름이 포함된 영화
+        System.out.println(title[j]);
+        count++;
+    }
+}
+System.out.println("총 출연작은 " + count + "편입니다.");
+```
+
+- 같은 index = 같은 영화. 배열 여러 개를 같이 쓸 때는 index for, 배열 하나만 볼 때는 for-each
+
+#### 페이지 나누기
+
+```java
+int totalPage = (int) Math.ceil(title.length / 10.0);   // 1938 / 10.0 = 193.8 → 194
+int start = (page - 1) * 10;                            // 출력 시작 위치
+```
+
+Math.ceil은 올림. 10으로 나누면 정수 나눗셈이라 193이 돼서 마지막 페이지가 사라진다.
+
+</details>
+
+<details>
+<summary>17. 정렬 (10.23)</summary>
+
+- 오름차순(ASC): 작은 값 → 큰 값
+- 내림차순(DESC): 큰 값 → 작은 값
+
+두 값 바꾸기 (swap)
+
+```java
+int temp = arr[i];
+arr[i] = arr[j];
+arr[j] = temp;
+```
+
+#### 선택 정렬
+
+기준 자리(i)와 그 뒤의 값들(j)을 비교한다. 라운드마다 앞자리부터 고정된다.
+
+```
+30 20 50 10 40
+1 round: 10 30 50 20 40
+2 round: 10 20 50 30 40
+3 round: 10 20 30 50 40
+4 round: 10 20 30 40 50
+```
+
+```java
+for (int i = 0; i < arr.length - 1; i++) {        // 기준 자리 0 ~ 3
+    for (int j = i + 1; j < arr.length; j++) {    // 비교 대상 i+1 ~ 4
+        if (arr[i] > arr[j]) {                    // 내림차순은 <
+            int temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+    }
+}
+```
+
+- char 배열도 같은 방식으로 정렬된다. (문자는 유니코드 값으로 비교)
+- 수업 코드는 비교할 때마다 바로 교환한다. 원래 선택 정렬은 라운드마다 최소값 위치(minIndex)를 찾아서 1번만 교환한다.
+
+#### 버블 정렬
+
+인접한 두 값끼리 비교한다. 라운드마다 가장 큰 값이 맨 뒤로 가서 뒷자리부터 고정된다.
+
+```
+30 20 50 10 40
+1 round: 20 30 10 40 50
+2 round: 20 10 30 40 50
+3 round: 10 20 30 40 50
+4 round: 10 20 30 40 50
+```
+
+```java
+for (int i = 0; i < arr.length - 1; i++) {
+    for (int j = 0; j < arr.length - 1 - i; j++) {   // 뒤에 고정된 i개는 빼고 비교
+        if (arr[j] > arr[j + 1]) {
+            int temp = arr[j];
+            arr[j] = arr[j + 1];
+            arr[j + 1] = temp;
+        }
+    }
+}
+```
+
+| | 선택 정렬 | 버블 정렬 |
+|---|---|---|
+| 비교 | 기준 자리 vs 뒤의 값들 | 인접한 두 값 |
+| 고정 | 앞자리부터 | 뒷자리부터 |
+| 시간 복잡도 | O(n²) | O(n²) |
+
+실무에서는 `Arrays.sort(arr)`를 쓴다. (오름차순) 정렬 원리는 면접, 코딩테스트용
+
+</details>
+
+<details>
+<summary>18. 1~4장 정리 (10.23)</summary>
+
+#### 자바 → 웹 개발 흐름
+
+- 모든 프로그램의 기본: 변수, 연산자, 제어문
+- 데이터 묶기: 배열, 클래스 / 명령어 묶기: 메소드 → 객체 지향
+- 그다음: 예외처리, 라이브러리(컬렉션, DB 연동)
+- 이후 과정: Oracle → HTML/CSS/JavaScript → JSP → Spring, MyBatis/JPA → Spring AI → AWS 배포
+
+#### 삼항 연산자
+
+```java
+String result = (score >= 60) ? "합격" : "불합격";   // 조건이 true면 앞, false면 뒤
+```
+
+#### 이중 for: 문자 패턴
+
+```java
+for (int i = 0; i < 4; i++) {
+    char c = 'A';                 // 줄마다 'A'부터 다시 시작
+    for (int j = 0; j < 4; j++) {
+        System.out.print(c++);
+    }
+    System.out.println();
+}
+```
+
+- c를 바깥 for 안에서 선언 → ABCD가 4줄
+- c를 바깥 for 밖에서 선언 → ABCD / EFGH / IJKL / MNOP
+- 지역 변수는 선언된 { }가 끝나면 사라진다. 그래서 바깥 for 안에서 선언한 c는 줄마다 새로 만들어진다.
+
+</details>
 </details>
