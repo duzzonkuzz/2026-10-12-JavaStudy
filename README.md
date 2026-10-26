@@ -1034,4 +1034,124 @@ for (int i = 0; i < 4; i++) {
 - 지역 변수는 선언된 { }가 끝나면 사라진다. 그래서 바깥 for 안에서 선언한 c는 줄마다 새로 만들어진다.
 
 </details>
+<details>
+<summary>19. 메소드 (10.26)</summary>
+
+#### 메소드 규칙
+
+- 클래스 안에만 만들 수 있고, 메소드 안에 메소드는 못 만든다.
+- 한 메소드는 한 가지 기능만 → 재사용, 유지보수, 가독성, 반복 제거
+- main에서는 메소드 호출만 하고, 처리는 각 메소드에서 한다.
+- 메소드가 끝나면 호출한 위치로 돌아온다.
+
+#### 리턴형 / 매개변수 조합
+
+| 리턴형 | 매개변수 | 예 |
+|---|---|---|
+| O | O | `String substring(int start)` |
+| O | X | `double random()` |
+| X (void) | O | `void println(String s)` |
+| X (void) | X | `void println()` |
+
+- 리턴형(결과값)은 1개만 돌려줄 수 있다. 여러 개면 배열, 컬렉션, 클래스로 묶어서 돌려준다.
+- 매개변수(요청값)는 여러 개 가능. 3개 이상이면 보통 배열이나 클래스로 묶는다.
+- return 값은 리턴형과 같은 데이터형으로 쓴다. (long 리턴형에 int 값처럼 더 작은 형은 가능)
+- void는 return 생략 가능
+
+#### static vs 인스턴스 메소드
+
+- static 메소드: `클래스명.메소드()` (예: Math.random(), String.valueOf())
+- 인스턴스 메소드: 객체를 만든 뒤 `객체명.메소드()` (예: s.length())
+- 같은 클래스 안의 static 메소드는 `메소드명()`만으로 호출
+
+#### 지역 변수는 호출할 때마다 새로 만들어진다
+
+```java
+static int display() {
+    int a = 10;
+    a++;
+    return a;
+}
+
+display();   // 11
+display();   // 11
+```
+
+#### 예제
+
+```java
+// 1~n 합. sum()과 이름은 같고 매개변수만 다름 (오버로딩)
+static int sum(int n) {
+    int s = 0;
+    for (int i = 1; i <= n; i++) {
+        s += i;
+    }
+    return s;
+}
+
+// 대문자 → 소문자 ('A'=65, 'a'=97, 차이 32)
+static char change(char c) {
+    return (char)(c + 32);
+}
+
+// 문자열 거꾸로 출력
+static void reverse(String msg) {
+    for (int i = msg.length() - 1; i >= 0; i--) {
+        System.out.print(msg.charAt(i));
+    }
+}
+
+// 배열을 받아서 최대값 리턴
+static int max(int[] arr) {
+    int m = arr[0];
+    for (int n : arr) {
+        if (n > m) m = n;
+    }
+    return m;
+}
+```
+
+배열은 참조형이라 메소드에 주소가 넘어간다. 그래서 메소드 안에서 `Arrays.sort(arr)`를 하면 원본 배열도 정렬된다.
+
+#### 예제: 로그인
+
+```java
+static boolean isLogin(String id, String pwd) {
+    final String MID = "hong";     // final: 값을 바꿀 수 없는 상수
+    final String PWD = "1234";
+    return id.equals(MID) && pwd.equals(PWD);
+}
+```
+
+#### 예제: 숫자야구 (기능별로 메소드 분리)
+
+| 메소드 | 기능 |
+|---|---|
+| `int[] rand()` | 1~9 중 중복 없는 숫자 3개 |
+| `int[] userInput()` | 세 자리 입력을 검사하고 배열로 나누기 |
+| `int hint(int[] com, int[] user)` | 스트라이크, 볼 계산 후 출력, 스트라이크 수 리턴 |
+| `boolean exit(int s)` | 3스트라이크면 true |
+| `void process()` | 위 메소드를 순서대로 호출 (게임 진행) |
+
+```java
+// 자릿수 나누기
+user[0] = input / 100;          // 369 → 3
+user[1] = (input % 100) / 10;   // 369 → 6
+user[2] = input % 10;           // 369 → 9
+
+// 스트라이크, 볼
+for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+        if (com[i] == user[j]) {
+            if (i == j) s++;    // 같은 수, 같은 자리 → 스트라이크
+            else b++;           // 같은 수, 다른 자리 → 볼
+        }
+    }
+}
+```
+
+- `System.exit(0)`: 프로그램 종료
+- 메소드 안에서 자기 자신을 다시 호출하면(재귀 호출) 처음부터 다시 실행된다. 단, 이전 호출이 끝나지 않고 계속 쌓이기 때문에 단순 반복이 목적이면 while이 더 안전하다.
+
+</details>
 </details>
