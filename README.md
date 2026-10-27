@@ -1154,4 +1154,119 @@ for (int i = 0; i < 3; i++) {
 - 메소드 안에서 자기 자신을 다시 호출하면(재귀 호출) 처음부터 다시 실행된다. 단, 이전 호출이 끝나지 않고 계속 쌓이기 때문에 단순 반복이 목적이면 while이 더 안전하다.
 
 </details>
+<details>
+<summary>20. 메소드 (2) 활용 (10.27)</summary>
+
+#### 리턴형 고르는 기준
+
+| 결과 | 리턴형 |
+|---|---|
+| 경우가 2가지 (로그인 성공 / 실패) | boolean |
+| 경우가 여러 개 | String |
+| 목록 | 배열, 컬렉션 |
+| 상세보기 (데이터 여러 개) | 클래스 |
+| 나머지 | 기본형 (int, double 등) |
+
+매개변수도 같다. 페이지 변경은 int, 글쓰기나 회원가입처럼 보낼 값이 많으면 클래스로 묶는다.
+
+#### return을 만나면 메소드 종료
+
+```java
+static boolean isLogin(String id, String pwd) {
+    if (id.equals("admin") && pwd.equals("1234"))
+        return true;      // 여기서 메소드 종료
+    else
+        return false;
+}
+
+if (isLogin(id, pwd)) {   // boolean 메소드는 if 조건에 바로 쓸 수 있다
+    System.out.println("로그인 되었습니다");
+}
+```
+
+#### 예제: 배열 통계 메소드
+
+```java
+static int hap(int[] arr) {
+    int sum = 0;
+    for (int n : arr) sum += n;
+    return sum;
+}
+
+static double avg(int[] arr) {
+    return (double) hap(arr) / arr.length;   // 만들어둔 메소드 재사용
+}
+
+static int even(int[] arr) {
+    int count = 0;
+    for (int n : arr) {
+        if (n % 2 == 0) count++;              // 홀수는 n % 2 != 0
+    }
+    return count;
+}
+```
+
+- max, min은 0이나 110 같은 임의의 값이 아니라 arr[0]으로 시작한다.
+- 평균은 10.0 대신 arr.length로 나눠야 배열 크기가 바뀌어도 맞다.
+
+</details>
+
+<details>
+<summary>21. 클래스 (10.27)</summary>
+
+#### 클래스와 객체
+
+- 클래스: 객체를 만들기 위한 설계도. 직접 만드는 데이터형(사용자 정의 데이터형)
+- 객체: 설계도대로 new로 만든 실체
+
+#### 클래스 종류
+
+| 종류 | 구성 | 이름 예 |
+|---|---|---|
+| 데이터만 | 변수 | VO, DTO |
+| 기능만 | 메소드 | DAO, Service, Manager |
+| 혼합 | 변수 + 메소드 | |
+
+#### 클래스 구성
+
+```java
+class ClassName {
+    변수      // 인스턴스 변수: 객체마다 따로 저장 / static 변수: 1개를 모든 객체가 공유
+    생성자    // 변수 초기화
+    메소드
+}
+```
+
+#### 예제
+
+```java
+class Student {
+    String name;
+    int hb;        // 학번
+    String sex;
+
+    Student(String n, int h, String s) {   // 생성자
+        name = n;
+        hb = h;
+        sex = s;
+    }
+}
+
+Student hong = new Student("홍길동", 1, "남자");
+Student shim = new Student("심청이", 2, "여자");
+System.out.println(hong.name);   // 홍길동
+System.out.println(shim.name);   // 심청이
+```
+
+```
+  Stack              Heap
+ hong: 0x100  ──▶  0x100: name="홍길동", hb=1, sex="남자"
+ shim: 0x200  ──▶  0x200: name="심청이", hb=2, sex="여자"
+```
+
+- 생성자: 클래스 이름과 같고 리턴형이 없다. new로 객체를 만들 때 자동으로 호출된다.
+- 생성자는 외부에서 받은 값(입력, 파일, DB)으로 변수를 초기화할 때 쓴다.
+- 객체마다 Heap에 따로 만들어져서 hong.name과 shim.name은 서로 다른 값이다. 접근은 `객체명.변수`
+
+</details>
 </details>
