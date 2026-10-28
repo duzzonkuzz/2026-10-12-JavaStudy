@@ -1269,4 +1269,122 @@ System.out.println(shim.name);   // 심청이
 - 객체마다 Heap에 따로 만들어져서 hong.name과 shim.name은 서로 다른 값이다. 접근은 `객체명.변수`
 
 </details>
+<details>
+<summary>22. 클래스 (2) 구성요소, 생성자, this (10.28)</summary>
+
+#### 객체 생명주기
+
+생성 `A a = new A();` → 활용 `a.display()` → 소멸 `a = null;` → 메모리 해제 (GC가 자동으로, `System.gc()`는 요청만)
+
+#### 인스턴스 변수 vs static 변수
+
+```java
+class A {
+    int b;           // 인스턴스 변수: 객체마다 따로
+    static int a;    // static 변수: 모든 객체가 1개를 공유
+}
+
+A aa = new A();
+A bb = new A();
+bb.a = 1000;     // aa.a, bb.a, A.a 전부 1000 (같은 메모리)
+bb.b = 200;      // aa.b는 그대로 0
+```
+
+- static 변수는 `클래스명.변수`로 쓰는 게 원칙
+- static 메소드, static 블록 안에서는 인스턴스 변수와 this를 쓸 수 없다. (객체가 없어도 실행되기 때문)
+
+#### 이름이 같으면 지역 변수가 우선
+
+```java
+class A {
+    static int a = 10;
+    static void display() {
+        int a = 20;
+        System.out.println(a + A.a);   // 20 + 10 = 30
+    }
+}
+```
+
+멤버 변수는 `클래스명.변수`(static)나 `this.변수`(인스턴스)로 구분한다.
+
+#### 클래스 영역에는 선언만
+
+```java
+class A {
+    int a = 100;     // O 선언하면서 값 설정
+    int b;
+    b = 100;         // X 에러. 실행문은 메소드, 생성자, 초기화 블록 안에서만
+}
+```
+
+#### 변수 초기화 방법
+
+1. 명시적 초기화: `int a = 100;`
+2. 초기화 블록: 인스턴스 블록 `{ }`는 객체를 만들 때마다, static 블록 `static { }`은 클래스가 처음 로딩될 때 1번
+3. 생성자
+
+인스턴스 변수는 명시적 → 초기화 블록 → 생성자 순서로 실행돼서 생성자에서 넣은 값이 최종 값이 된다.
+
+#### 생성자
+
+- 클래스 이름과 같고 리턴형이 없다. (void를 붙이면 일반 메소드가 된다)
+- new로 객체를 만들 때 1번만 호출된다.
+- 매개변수를 다르게 해서 여러 개 만들 수 있다. (오버로딩)
+- 하나도 안 만들면 매개변수 없는 기본 생성자가 자동으로 만들어진다. 단, 생성자를 하나라도 직접 만들면 자동으로 안 만들어진다.
+- 쓰임: 변수 초기화, 시작할 때 필요한 기능 (자동 로그인, 서버 연결, DB 연결)
+
+#### this
+
+객체 자기 자신의 주소. 매개변수와 멤버 변수 이름이 같을 때 구분하는 데 쓴다.
+
+```java
+class Student {
+    int hakbun;
+    String name;
+    int kor, eng, math;
+
+    Student(int hakbun, String name, int kor, int eng, int math) {
+        this.hakbun = hakbun;     // this.hakbun = 멤버 변수, hakbun = 매개변수
+        this.name = name;
+        this.kor = kor;
+        this.eng = eng;
+        this.math = math;
+    }
+}
+
+Student s1 = new Student(1, "홍길동", 90, 90, 90);
+Student s2 = new Student(2, "심청이", 70, 70, 70);
+
+Student[] std = {s1, s2};         // 객체도 배열로 묶을 수 있다
+for (Student s : std) {
+    System.out.println(s.hakbun + " " + s.name + " " + s.kor);
+}
+```
+
+- s1 안에서 this는 s1, s2 안에서 this는 s2
+- 이클립스: 우클릭 → Source → Generate Constructor using Fields로 생성자 자동 생성
+
+#### 상속 맛보기
+
+```java
+class A { int a, b; }
+class B extends A { }    // B는 A의 변수를 물려받는다
+```
+
+B 객체를 만들면 A 부분(super)과 B 부분(this)이 같이 만들어진다.
+
+#### 객체지향 3대 특성
+
+| 특성 | 목적 | 방법 |
+|---|---|---|
+| 캡슐화 | 데이터 보호 | private + getter / setter |
+| 상속 | 재사용, 확장 | extends |
+| 다형성 | 기능 추가 / 변경 | 오버로딩, 오버라이딩 |
+
+추상화를 넣어서 4대 특성이라고도 한다.
+
+- 접근지정어: public / protected / default / private
+- 제어어: static / final / abstract
+
+</details>
 </details>
