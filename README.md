@@ -865,4 +865,408 @@ Arrays.sort(lotto);  // 오름차순 정렬
 ```
 
 </details>
+<details>
+<summary>16. 문자열 배열 - 파일 데이터 다루기 (10.23)</summary>
+
+movie.txt는 한 줄이 영화 1개이고, 항목은 `|`로 구분돼 있다.
+
+```
+1|쇼생크 탈출|드라마|이미지주소|출연진|개봉일|15세 관람가|감독
+```
+
+#### 파일 → 배열
+
+```java
+FileReader fr = new FileReader("c:\\javaDev\\movie.txt");
+StringBuffer sb = new StringBuffer();
+int i = 0;
+while ((i = fr.read()) != -1) {     // 한 글자씩 읽기, 파일 끝이면 -1
+    sb.append((char) i);
+}
+fr.close();
+
+String[] movies = sb.toString().split("\n");     // 줄 단위 → 영화 1개씩
+String[] title = new String[movies.length];
+String[] actor = new String[movies.length];
+
+for (int j = 0; j < movies.length; j++) {
+    String[] data = movies[j].split("\\|");      // 항목 단위
+    title[j] = data[1];
+    actor[j] = data[4];
+}
+```
+
+- 파일 읽기는 try~catch로 감싸야 한다. (파일이 없을 수도 있어서)
+- StringBuffer: 문자열을 계속 이어 붙일 때 사용한다. (String에 +=를 하면 매번 새 문자열이 만들어진다)
+- 배열 크기는 1938처럼 직접 쓰지 말고 movies.length로
+
+#### 검색
+
+```java
+int count = 0;
+for (int j = 0; j < actor.length; j++) {
+    if (actor[j].contains(ac)) {     // 입력한 배우 이름이 포함된 영화
+        System.out.println(title[j]);
+        count++;
+    }
+}
+System.out.println("총 출연작은 " + count + "편입니다.");
+```
+
+- 같은 index = 같은 영화. 배열 여러 개를 같이 쓸 때는 index for, 배열 하나만 볼 때는 for-each
+
+#### 페이지 나누기
+
+```java
+int totalPage = (int) Math.ceil(title.length / 10.0);   // 1938 / 10.0 = 193.8 → 194
+int start = (page - 1) * 10;                            // 출력 시작 위치
+```
+
+Math.ceil은 올림. 10으로 나누면 정수 나눗셈이라 193이 돼서 마지막 페이지가 사라진다.
+
+</details>
+
+<details>
+<summary>17. 정렬 (10.23)</summary>
+
+- 오름차순(ASC): 작은 값 → 큰 값
+- 내림차순(DESC): 큰 값 → 작은 값
+
+두 값 바꾸기 (swap)
+
+```java
+int temp = arr[i];
+arr[i] = arr[j];
+arr[j] = temp;
+```
+
+#### 선택 정렬
+
+기준 자리(i)와 그 뒤의 값들(j)을 비교한다. 라운드마다 앞자리부터 고정된다.
+
+```
+30 20 50 10 40
+1 round: 10 30 50 20 40
+2 round: 10 20 50 30 40
+3 round: 10 20 30 50 40
+4 round: 10 20 30 40 50
+```
+
+```java
+for (int i = 0; i < arr.length - 1; i++) {        // 기준 자리 0 ~ 3
+    for (int j = i + 1; j < arr.length; j++) {    // 비교 대상 i+1 ~ 4
+        if (arr[i] > arr[j]) {                    // 내림차순은 <
+            int temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+    }
+}
+```
+
+- char 배열도 같은 방식으로 정렬된다. (문자는 유니코드 값으로 비교)
+- 수업 코드는 비교할 때마다 바로 교환한다. 원래 선택 정렬은 라운드마다 최소값 위치(minIndex)를 찾아서 1번만 교환한다.
+
+#### 버블 정렬
+
+인접한 두 값끼리 비교한다. 라운드마다 가장 큰 값이 맨 뒤로 가서 뒷자리부터 고정된다.
+
+```
+30 20 50 10 40
+1 round: 20 30 10 40 50
+2 round: 20 10 30 40 50
+3 round: 10 20 30 40 50
+4 round: 10 20 30 40 50
+```
+
+```java
+for (int i = 0; i < arr.length - 1; i++) {
+    for (int j = 0; j < arr.length - 1 - i; j++) {   // 뒤에 고정된 i개는 빼고 비교
+        if (arr[j] > arr[j + 1]) {
+            int temp = arr[j];
+            arr[j] = arr[j + 1];
+            arr[j + 1] = temp;
+        }
+    }
+}
+```
+
+| | 선택 정렬 | 버블 정렬 |
+|---|---|---|
+| 비교 | 기준 자리 vs 뒤의 값들 | 인접한 두 값 |
+| 고정 | 앞자리부터 | 뒷자리부터 |
+| 시간 복잡도 | O(n²) | O(n²) |
+
+실무에서는 `Arrays.sort(arr)`를 쓴다. (오름차순) 정렬 원리는 면접, 코딩테스트용
+
+</details>
+
+<details>
+<summary>18. 1~4장 정리 (10.23)</summary>
+
+#### 자바 → 웹 개발 흐름
+
+- 모든 프로그램의 기본: 변수, 연산자, 제어문
+- 데이터 묶기: 배열, 클래스 / 명령어 묶기: 메소드 → 객체 지향
+- 그다음: 예외처리, 라이브러리(컬렉션, DB 연동)
+- 이후 과정: Oracle → HTML/CSS/JavaScript → JSP → Spring, MyBatis/JPA → Spring AI → AWS 배포
+
+#### 삼항 연산자
+
+```java
+String result = (score >= 60) ? "합격" : "불합격";   // 조건이 true면 앞, false면 뒤
+```
+
+#### 이중 for: 문자 패턴
+
+```java
+for (int i = 0; i < 4; i++) {
+    char c = 'A';                 // 줄마다 'A'부터 다시 시작
+    for (int j = 0; j < 4; j++) {
+        System.out.print(c++);
+    }
+    System.out.println();
+}
+```
+
+- c를 바깥 for 안에서 선언 → ABCD가 4줄
+- c를 바깥 for 밖에서 선언 → ABCD / EFGH / IJKL / MNOP
+- 지역 변수는 선언된 { }가 끝나면 사라진다. 그래서 바깥 for 안에서 선언한 c는 줄마다 새로 만들어진다.
+
+</details>
+<details>
+<summary>19. 메소드 (10.26)</summary>
+
+#### 메소드 규칙
+
+- 클래스 안에만 만들 수 있고, 메소드 안에 메소드는 못 만든다.
+- 한 메소드는 한 가지 기능만 → 재사용, 유지보수, 가독성, 반복 제거
+- main에서는 메소드 호출만 하고, 처리는 각 메소드에서 한다.
+- 메소드가 끝나면 호출한 위치로 돌아온다.
+
+#### 리턴형 / 매개변수 조합
+
+| 리턴형 | 매개변수 | 예 |
+|---|---|---|
+| O | O | `String substring(int start)` |
+| O | X | `double random()` |
+| X (void) | O | `void println(String s)` |
+| X (void) | X | `void println()` |
+
+- 리턴형(결과값)은 1개만 돌려줄 수 있다. 여러 개면 배열, 컬렉션, 클래스로 묶어서 돌려준다.
+- 매개변수(요청값)는 여러 개 가능. 3개 이상이면 보통 배열이나 클래스로 묶는다.
+- return 값은 리턴형과 같은 데이터형으로 쓴다. (long 리턴형에 int 값처럼 더 작은 형은 가능)
+- void는 return 생략 가능
+
+#### static vs 인스턴스 메소드
+
+- static 메소드: `클래스명.메소드()` (예: Math.random(), String.valueOf())
+- 인스턴스 메소드: 객체를 만든 뒤 `객체명.메소드()` (예: s.length())
+- 같은 클래스 안의 static 메소드는 `메소드명()`만으로 호출
+
+#### 지역 변수는 호출할 때마다 새로 만들어진다
+
+```java
+static int display() {
+    int a = 10;
+    a++;
+    return a;
+}
+
+display();   // 11
+display();   // 11
+```
+
+#### 예제
+
+```java
+// 1~n 합. sum()과 이름은 같고 매개변수만 다름 (오버로딩)
+static int sum(int n) {
+    int s = 0;
+    for (int i = 1; i <= n; i++) {
+        s += i;
+    }
+    return s;
+}
+
+// 대문자 → 소문자 ('A'=65, 'a'=97, 차이 32)
+static char change(char c) {
+    return (char)(c + 32);
+}
+
+// 문자열 거꾸로 출력
+static void reverse(String msg) {
+    for (int i = msg.length() - 1; i >= 0; i--) {
+        System.out.print(msg.charAt(i));
+    }
+}
+
+// 배열을 받아서 최대값 리턴
+static int max(int[] arr) {
+    int m = arr[0];
+    for (int n : arr) {
+        if (n > m) m = n;
+    }
+    return m;
+}
+```
+
+배열은 참조형이라 메소드에 주소가 넘어간다. 그래서 메소드 안에서 `Arrays.sort(arr)`를 하면 원본 배열도 정렬된다.
+
+#### 예제: 로그인
+
+```java
+static boolean isLogin(String id, String pwd) {
+    final String MID = "hong";     // final: 값을 바꿀 수 없는 상수
+    final String PWD = "1234";
+    return id.equals(MID) && pwd.equals(PWD);
+}
+```
+
+#### 예제: 숫자야구 (기능별로 메소드 분리)
+
+| 메소드 | 기능 |
+|---|---|
+| `int[] rand()` | 1~9 중 중복 없는 숫자 3개 |
+| `int[] userInput()` | 세 자리 입력을 검사하고 배열로 나누기 |
+| `int hint(int[] com, int[] user)` | 스트라이크, 볼 계산 후 출력, 스트라이크 수 리턴 |
+| `boolean exit(int s)` | 3스트라이크면 true |
+| `void process()` | 위 메소드를 순서대로 호출 (게임 진행) |
+
+```java
+// 자릿수 나누기
+user[0] = input / 100;          // 369 → 3
+user[1] = (input % 100) / 10;   // 369 → 6
+user[2] = input % 10;           // 369 → 9
+
+// 스트라이크, 볼
+for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+        if (com[i] == user[j]) {
+            if (i == j) s++;    // 같은 수, 같은 자리 → 스트라이크
+            else b++;           // 같은 수, 다른 자리 → 볼
+        }
+    }
+}
+```
+
+- `System.exit(0)`: 프로그램 종료
+- 메소드 안에서 자기 자신을 다시 호출하면(재귀 호출) 처음부터 다시 실행된다. 단, 이전 호출이 끝나지 않고 계속 쌓이기 때문에 단순 반복이 목적이면 while이 더 안전하다.
+
+</details>
+<details>
+<summary>20. 메소드 (2) 활용 (10.27)</summary>
+
+#### 리턴형 고르는 기준
+
+| 결과 | 리턴형 |
+|---|---|
+| 경우가 2가지 (로그인 성공 / 실패) | boolean |
+| 경우가 여러 개 | String |
+| 목록 | 배열, 컬렉션 |
+| 상세보기 (데이터 여러 개) | 클래스 |
+| 나머지 | 기본형 (int, double 등) |
+
+매개변수도 같다. 페이지 변경은 int, 글쓰기나 회원가입처럼 보낼 값이 많으면 클래스로 묶는다.
+
+#### return을 만나면 메소드 종료
+
+```java
+static boolean isLogin(String id, String pwd) {
+    if (id.equals("admin") && pwd.equals("1234"))
+        return true;      // 여기서 메소드 종료
+    else
+        return false;
+}
+
+if (isLogin(id, pwd)) {   // boolean 메소드는 if 조건에 바로 쓸 수 있다
+    System.out.println("로그인 되었습니다");
+}
+```
+
+#### 예제: 배열 통계 메소드
+
+```java
+static int hap(int[] arr) {
+    int sum = 0;
+    for (int n : arr) sum += n;
+    return sum;
+}
+
+static double avg(int[] arr) {
+    return (double) hap(arr) / arr.length;   // 만들어둔 메소드 재사용
+}
+
+static int even(int[] arr) {
+    int count = 0;
+    for (int n : arr) {
+        if (n % 2 == 0) count++;              // 홀수는 n % 2 != 0
+    }
+    return count;
+}
+```
+
+- max, min은 0이나 110 같은 임의의 값이 아니라 arr[0]으로 시작한다.
+- 평균은 10.0 대신 arr.length로 나눠야 배열 크기가 바뀌어도 맞다.
+
+</details>
+
+<details>
+<summary>21. 클래스 (10.27)</summary>
+
+#### 클래스와 객체
+
+- 클래스: 객체를 만들기 위한 설계도. 직접 만드는 데이터형(사용자 정의 데이터형)
+- 객체: 설계도대로 new로 만든 실체
+
+#### 클래스 종류
+
+| 종류 | 구성 | 이름 예 |
+|---|---|---|
+| 데이터만 | 변수 | VO, DTO |
+| 기능만 | 메소드 | DAO, Service, Manager |
+| 혼합 | 변수 + 메소드 | |
+
+#### 클래스 구성
+
+```java
+class ClassName {
+    변수      // 인스턴스 변수: 객체마다 따로 저장 / static 변수: 1개를 모든 객체가 공유
+    생성자    // 변수 초기화
+    메소드
+}
+```
+
+#### 예제
+
+```java
+class Student {
+    String name;
+    int hb;        // 학번
+    String sex;
+
+    Student(String n, int h, String s) {   // 생성자
+        name = n;
+        hb = h;
+        sex = s;
+    }
+}
+
+Student hong = new Student("홍길동", 1, "남자");
+Student shim = new Student("심청이", 2, "여자");
+System.out.println(hong.name);   // 홍길동
+System.out.println(shim.name);   // 심청이
+```
+
+```
+  Stack              Heap
+ hong: 0x100  ──▶  0x100: name="홍길동", hb=1, sex="남자"
+ shim: 0x200  ──▶  0x200: name="심청이", hb=2, sex="여자"
+```
+
+- 생성자: 클래스 이름과 같고 리턴형이 없다. new로 객체를 만들 때 자동으로 호출된다.
+- 생성자는 외부에서 받은 값(입력, 파일, DB)으로 변수를 초기화할 때 쓴다.
+- 객체마다 Heap에 따로 만들어져서 hong.name과 shim.name은 서로 다른 값이다. 접근은 `객체명.변수`
+
+</details>
 </details>
