@@ -1387,4 +1387,178 @@ B 객체를 만들면 A 부분(super)과 B 부분(this)이 같이 만들어진�
 - 제어어: static / final / abstract
 
 </details>
+<details>
+<summary>23. 영화 관리 프로그램 - 클래스 나누기 (10.29)</summary>
+
+| 클래스 | 역할 |
+|---|---|
+| Movie | 영화 1개의 데이터 (VO) |
+| MovieSystem | 데이터 불러오기 + 기능 (목록, 상세, 검색) |
+| Main | 메뉴 출력, 입력 받기 |
+
+#### Movie
+
+```java
+@Data              // lombok: getter, setter, toString 등 자동 생성
+public class Movie {
+    private int mno;
+    private String title;
+    private String genre;
+    private String poster;
+    private String actor;
+    private String regdate;
+    private String grade;
+    private String director;
+}
+```
+
+#### MovieSystem
+
+```java
+public class MovieSystem {
+    private static Movie[] movies;
+
+    static {    // 클래스가 처음 쓰일 때 1번 실행 → 파일 데이터를 미리 불러온다
+        try {
+            // 파일 읽기는 16번과 같음 → sb
+            String[] lines = sb.toString().split("\n");
+            movies = new Movie[lines.length];
+            for (int i = 0; i < lines.length; i++) {
+                String[] info = lines[i].split("\\|");
+                movies[i] = new Movie();
+                movies[i].setMno(Integer.parseInt(info[0]));   // 문자열 → 정수
+                movies[i].setTitle(info[1]);
+                movies[i].setGenre(info[2]);
+                movies[i].setPoster(info[3]);
+                movies[i].setActor(info[4]);
+                movies[i].setRegdate(info[5]);
+                movies[i].setGrade(info[6]);
+                movies[i].setDirector(info[7]);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public Movie[] movieListData() {               // 목록 → 여러 개라 Movie[]
+        return movies;
+    }
+
+    public Movie movieDetailData(int mno) {        // 상세 → 1개라 Movie
+        return movies[mno - 1];                    // 영화 번호 - 1 = index
+    }
+
+    public Movie[] moviesFindData(String fd) {     // 검색
+        int count = 0;
+        for (Movie m : movies) {
+            if (m.getTitle().contains(fd)) count++;       // 1) 개수 세기
+        }
+        Movie[] result = new Movie[count];               // 2) 딱 맞는 크기로 배열 생성
+        int i = 0;
+        for (Movie m : movies) {
+            if (m.getTitle().contains(fd)) result[i++] = m;   // 3) 담기
+        }
+        return result;
+    }
+}
+```
+
+- 배열은 크기가 고정이라 검색 결과 개수를 먼저 세야 한다. (나중에 배울 ArrayList는 개수를 몰라도 된다)
+- 예외처리 3가지: 복구(try~catch), 회피(throws), 발생(throw)
+
+#### Main
+
+```java
+MovieSystem ms = new MovieSystem();
+while (true) {
+    // 메뉴 출력 후 번호 입력
+    if (menu == 4) {
+        break;
+    } else if (menu == 1) {
+        for (Movie m : ms.movieListData()) {
+            System.out.println(m.getMno() + "." + m.getTitle());
+        }
+    }
+    // 2: movieDetailData(번호), 3: moviesFindData(검색어)
+}
+```
+
+</details>
+
+<details>
+<summary>24. 캡슐화, 접근지정어, 생성자 오버로딩 (10.29)</summary>
+
+#### 접근지정어
+
+| | 같은 클래스 | 같은 패키지 | 다른 패키지 + 상속 | 전체 |
+|---|---|---|---|---|
+| private | O | | | |
+| default | O | O | | |
+| protected | O | O | O | |
+| public | O | O | O | O |
+
+- 보통 변수는 private, 생성자, 메소드, 클래스는 public
+- default는 아무것도 안 쓴 것
+
+#### 캡슐화: getter / setter
+
+```java
+class Sawon {
+    private int sabun;                    // 밖에서 s.sabun으로 직접 접근 불가
+
+    public int getSabun() {               // 읽기
+        return sabun;
+    }
+    public void setSabun(int sabun) {     // 쓰기
+        this.sabun = sabun;
+    }
+}
+
+s.setSabun(1);
+System.out.println(s.getSabun());
+```
+
+lombok을 쓰면 변수 위에 `@Getter` `@Setter`, 또는 클래스 위에 `@Data`만 붙여도 자동으로 만들어진다.
+
+#### 제어어
+
+- static: 공통 (모든 객체가 공유)
+- final: 마지막. 변수는 값 변경 불가(상수), 메소드는 오버라이딩 불가, 클래스는 상속 불가
+- abstract: 구현 없이 선언만 (추상 메소드, 추상 클래스)
+
+순서는 `접근지정어 제어어 데이터형 이름` (예: `public static final int MAX = 100;`)
+
+#### 생성자 오버로딩, this()
+
+```java
+class Sawon {
+    private int sabun;
+    private String name;
+    private String dept;
+
+    public Sawon() {                      // 기본값
+        sabun = 1;
+        name = "홍길동";
+        dept = "개발부";
+    }
+    public Sawon(int sabun, String name) {
+        this.sabun = sabun;
+        this.name = name;                 // dept는 초기화 안 돼서 null
+    }
+    public Sawon(String name, String dept) {
+        this();                           // 기본 생성자 먼저 실행 → sabun = 1
+        this.name = name;
+        this.dept = dept;
+    }
+}
+
+new Sawon();                  // 1 홍길동 개발부
+new Sawon(2, "심청이");       // 2 심청이 null
+new Sawon("박문수", "영업부"); // 1 박문수 영업부
+```
+
+- this(): 같은 클래스의 다른 생성자 호출. 반드시 생성자의 첫 줄에 쓴다.
+- 오버로딩 조건: 같은 클래스, 같은 이름, 매개변수 개수나 데이터형이 다름 (리턴형은 상관없음)
+
+</details>
 </details>
