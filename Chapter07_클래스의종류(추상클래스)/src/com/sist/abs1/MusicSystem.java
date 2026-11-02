@@ -13,6 +13,8 @@ package com.sist.abs1;
  *     
  *  댓글형 게시판
  *      글쓰기 / 목록 / 상세보기, 댓글 / 검색 / 수정 / 삭제
+ *      
+ *  ㄹ
  */   
 public abstract class MusicSystem {
 	//상속받느 클래스까지 접근 가능 private -> getter setter
