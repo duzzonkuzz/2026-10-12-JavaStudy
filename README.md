@@ -1672,4 +1672,151 @@ if (temp.equals("유지")) {
 윈도우 화면(MusicList)은 JFrame에 JTable을 붙이고, `model.addRow(배열)`로 한 줄씩 추가한다.
 
 </details>
+<details>
+<summary>27. 상속 (2) super, 다형성 (11.02)</summary>
+
+#### 재사용 기법
+
+| 방법 | 관계 | 쓰는 경우 |
+|---|---|---|
+| 포함 | has-a | 변경 없이 그대로 사용 (`JFrame f = new JFrame();`) |
+| 상속 | is-a | 변경해서 사용 (`extends JFrame` + 오버라이딩) |
+
+- 모든 클래스는 Object를 자동으로 상속받는다. (최상위 클래스)
+- final 클래스는 상속할 수 없다. (String, Math, System 등 표준화된 클래스)
+- 상속 장점: 재사용, 유지보수, 신뢰성(이미 검증된 코드) / 단점: 메모리, 속도, 부모를 수정하면 자식도 영향을 받는다
+
+#### 생성자 호출 순서와 super()
+
+```java
+class A {
+    public A() { System.out.println("A() Call..."); }
+}
+class B extends A {
+    public B() { System.out.println("B() Call..."); }
+}
+
+new B();   // A() Call... → B() Call...  (부모 생성자가 먼저)
+```
+
+자식 생성자 첫 줄에 `super()`가 자동으로 들어가서 부모 생성자가 먼저 실행된다.
+
+부모에 매개변수 있는 생성자만 있으면 super(...)를 직접 호출해야 한다. (안 하면 컴파일 에러)
+
+```java
+class Human {
+    String name, sex, address, phone;
+    public Human(String name, String sex, String address, String phone) { ... }
+}
+
+class Student extends Human {
+    int hakbun;
+    public Student(String name, String sex, String address, String phone) {
+        super(name, sex, address, phone);   // 공통 변수 초기화는 부모 생성자에 맡긴다
+    }
+}
+```
+
+| | this | super |
+|---|---|---|
+| 변수, 메소드 | 자기 객체 | 부모 객체 |
+| 생성자 호출 | this(): 자기 다른 생성자 | super(): 부모 생성자 |
+
+- this(), super()는 생성자 첫 줄에만 쓸 수 있어서 둘 중 하나만 가능
+- static 메소드, static 블록에서는 this, super 사용 불가
+
+#### 다형성: 부모 타입 변수 하나로 여러 자식 객체 다루기
+
+```java
+동물 animal = null;           // 아직 객체 없음 (주소 없음)
+switch (ani) {
+    case "개": animal = new 개(); break;
+    case "소": animal = new 소(); break;
+    case "말": animal = new 말(); break;
+}
+animal.run();                     // 입력한 동물의 run() → 실행할 때 결정된다 (동적 바인딩)
+System.out.println(animal.a);     // 100 (변수는 선언한 동물 타입 기준)
+```
+
+- 부모 타입 변수에 자식 객체를 넣을 수 있다. 반대는 안 되고, 형제끼리도 안 된다. (`남자 a = new 여자();` X)
+- 부모 타입 변수로는 부모에 있는 멤버만 쓸 수 있다. 자식에만 있는 메소드는 호출 불가
+- case에 없는 값을 입력하면 animal이 null인 채로 run()을 호출해서 NullPointerException → default 처리 필요
+
+</details>
+
+<details>
+<summary>28. 추상 클래스, 인터페이스 (11.02)</summary>
+
+#### 추상 클래스
+
+공통점을 모아둔 미완성 클래스. 클래스마다 구현이 다른 메소드는 선언만 해두고 상속받은 클래스가 구현한다.
+
+```java
+abstract class 도형 {
+    String color = "검정색";
+    abstract void draw();               // 추상 메소드: 선언만 → 자식이 반드시 구현
+    void tick() {                       // 일반 메소드: 그대로 쓰거나 오버라이딩 (선택)
+        System.out.println("두께: 5mm");
+    }
+}
+
+class 원 extends 도형 {
+    @Override
+    void draw() { System.out.println("원을 그린다"); }
+    @Override
+    void tick() { System.out.println("두께: 10mm"); }
+}
+
+도형 a = new 원();    // new 도형()은 불가
+a.draw();
+a = new 네모();       // 변수 하나로 여러 도형을 제어
+a.draw();
+```
+
+- @Override: 오버라이딩한 메소드라는 표시. 이름이나 매개변수가 틀리면 컴파일 에러로 알려준다.
+- 이클립스: 클래스 이름의 에러에서 Add unimplemented methods → 추상 메소드 자동 생성
+- 활용: 26번 Music → GenieMusic, MelonMusic 구조, DB 연결(오라클, MySQL을 같은 코드로 사용)
+- 단점: 단일 상속만 가능, 추상 메소드를 추가하면 모든 자식 클래스를 수정해야 한다
+
+#### 인터페이스
+
+추상 클래스를 보완한 것. implements로 여러 개를 동시에 구현할 수 있다.
+
+```java
+interface A {
+    int MAX = 10;          // 자동으로 public static final (상수)
+    void display();        // 자동으로 public abstract
+}
+
+class B implements A, C {  // 여러 개 구현 가능
+    public void display() { ... }
+}
+```
+
+| | 추상 클래스 | 인터페이스 |
+|---|---|---|
+| 키워드 | extends | implements |
+| 상속 | 1개만 | 여러 개 |
+| 변수 | 일반 변수 가능 | 상수만 |
+| 메소드 | 추상 + 일반 | 추상 (Java 8부터 default 메소드 가능) |
+| 접근지정어 | 자유 | public (생략해도 자동) |
+
+공통점: new로 직접 객체를 만들 수 없고, 관련된 클래스를 하나의 타입으로 묶어서 관리한다.
+
+#### 익명 클래스, 람다
+
+```java
+Runnable r = new Runnable() {     // 이름 없는 클래스로 바로 구현
+    @Override
+    public void run() {
+        System.out.println("쓰레드 실행");
+    }
+};
+
+Runnable rr = () -> System.out.println("쓰레드 실행");   // 람다: 메소드 1개짜리 인터페이스를 짧게
+```
+
+윈도우 이벤트, 쓰레드, 네트워크에서 자주 쓴다.
+
+</details>
 </details>
