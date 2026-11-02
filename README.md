@@ -1561,4 +1561,115 @@ new Sawon("박문수", "영업부"); // 1 박문수 영업부
 - 오버로딩 조건: 같은 클래스, 같은 이름, 매개변수 개수나 데이터형이 다름 (리턴형은 상관없음)
 
 </details>
+<details>
+<summary>25. 상속, 오버라이딩 (10.30)</summary>
+
+#### package, import
+
+- package: 관련된 클래스를 묶는 폴더. 다른 패키지에서 쓰려면 public이어야 한다.
+- import: 다른 패키지의 클래스를 가져온다. `java.util.*`은 그 패키지의 클래스 전부
+
+#### 상속 (extends)
+
+공통 변수와 메소드를 부모 클래스에 모아서 재사용한다.
+
+```
+사람: 이름, 성별, 나이
+학생 extends 사람   → 학번, 전공만 추가
+회사원 extends 사람 → 사번, 부서만 추가
+```
+
+- 부모 = super 클래스, 자식 = sub 클래스
+- 자바는 단일 상속만 가능 (부모는 1개)
+- 생성자, 초기화 블록은 상속되지 않는다.
+- private은 상속은 되지만 자식에서 직접 못 쓴다. 자식에서 쓰게 하려면 protected
+- is-a: 상속 (학생은 사람이다) / has-a: 포함 (클래스 안에 다른 클래스를 변수로 가진다)
+- 단점: 객체를 만들 때 부모 부분까지 메모리에 같이 올라가서 무거워진다. 꼭 필요할 때만 쓴다.
+
+#### 오버라이딩
+
+부모 메소드를 자식에서 다시 정의한다.
+
+```java
+class Animal {
+    int age = 10;
+    public void eat() { System.out.println("먹는다"); }
+}
+
+class Pig extends Animal {
+    int age = 5;
+    public void eat() { System.out.println("돼지처럼 먹는다"); }   // 오버라이딩
+}
+
+Animal pig = new Pig();          // 부모 타입 변수에 자식 객체 저장 가능
+pig.eat();                       // 돼지처럼 먹는다 → 메소드는 실제 객체(Pig) 기준
+System.out.println(pig.age);     // 10 → 변수는 선언한 타입(Animal) 기준
+```
+
+조건: 상속 관계, 메소드 이름 / 매개변수 / 리턴형 동일, 접근지정어는 같거나 넓게만 (private < default < protected < public)
+
+#### 오버로딩 vs 오버라이딩
+
+| | 오버로딩 | 오버라이딩 |
+|---|---|---|
+| 의미 | 같은 이름으로 새 메소드 추가 | 부모 메소드를 다시 정의 |
+| 위치 | 같은 클래스 | 상속 관계 |
+| 매개변수 | 달라야 한다 | 같아야 한다 |
+| 리턴형 | 상관없다 | 같아야 한다 |
+
+둘 다 다형성(기능 추가 / 변경)에 해당한다.
+
+</details>
+
+<details>
+<summary>26. 음악 차트 프로그램 - 상속 활용 (10.30)</summary>
+
+| 클래스 | 역할 |
+|---|---|
+| MusicVo | 노래 1개의 데이터 (@Data) |
+| Music | 부모. 공통 데이터(musics 배열)와 기능(목록, 제목 검색, 가수 검색) |
+| GenieMusic, MelonMusic | 자식. 생성자에서 각 사이트를 크롤링해서 musics를 채운다 |
+| UserMain, MusicList | 실행 (콘솔 / 윈도우 화면) |
+
+```java
+public class Music {
+    public static MusicVo[] musics = new MusicVo[50];
+
+    public MusicVo[] musicListData() { return musics; }
+    public MusicVo[] musicSearchT(String title) { ... }    // 23번 영화 검색과 같은 방식
+    public MusicVo[] musicSearchS(String singer) { ... }
+}
+
+public class MelonMusic extends Music {
+    public MelonMusic() {
+        // 멜론 차트 크롤링 → musics[i]에 저장
+    }
+}
+
+Music music = new MelonMusic();             // new GenieMusic()으로 바꿔도 아래 코드는 그대로
+MusicVo[] list = music.musicListData();     // 부모에 있는 메소드를 그대로 사용
+list = music.musicSearchT(title);
+```
+
+- 사이트마다 다른 부분(크롤링)만 자식에, 같은 부분(목록, 검색)은 부모에 둔다.
+- 부모 타입 변수로 받아두면 객체만 바꿔서 다른 사이트 데이터를 쓸 수 있다. (다형성)
+
+#### 크롤링 데이터 처리
+
+```java
+poster.get(i).attr("src")        // text()는 글자, attr()은 태그 속성 값 (이미지 주소)
+
+String temp = etc.get(i).text(); // 순위 변동 (숫자 + 상승/하강, 또는 유지)
+if (temp.equals("유지")) {
+    id = 0;
+    state = "유지";
+} else {
+    id = Integer.parseInt(temp.replaceAll("[^0-9]", ""));   // 숫자만 남기기
+    state = temp.replaceAll("[^가-힣]", "");                  // 한글만 남기기
+}
+```
+
+윈도우 화면(MusicList)은 JFrame에 JTable을 붙이고, `model.addRow(배열)`로 한 줄씩 추가한다.
+
+</details>
 </details>
