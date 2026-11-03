@@ -1819,4 +1819,61 @@ Runnable rr = () -> System.out.println("쓰레드 실행");   // 람다: 메소�
 윈도우 이벤트, 쓰레드, 네트워크에서 자주 쓴다.
 
 </details>
+<details>
+<summary>29. 인터페이스 (2) (11.03)</summary>
+
+#### 여러 클래스를 한 이름으로 관리
+
+```java
+List list = new ArrayList();   // List는 인터페이스라 new List()는 불가
+list = new LinkedList();       // 구현 클래스만 바꿔 끼우면 나머지 코드는 그대로
+list = new Vector();
+```
+
+클래스끼리 직접 묶이지 않아서(결합성이 낮아서) 유지보수가 쉽다.
+
+#### 구성요소
+
+```java
+interface A {
+    int MAX = 100;               // 상수 (public static final 자동). 반드시 값을 넣어야 한다
+    void display();              // 추상 메소드 (public abstract 자동)
+    default void print() { }     // default 메소드: 구현된 메소드 (Java 8)
+    static void info() { }       // static 메소드: A.info()로 호출 (Java 8)
+    private void help() { }      // private 메소드: 인터페이스 안에서만 사용 (Java 9)
+}
+```
+
+default 메소드가 생긴 이유: 인터페이스에 추상 메소드를 추가하면 구현한 클래스가 전부 에러가 난다. 구현된 메소드로 추가하면 기존 클래스는 고칠 필요가 없다.
+
+#### 상속 관계
+
+| 관계 | 키워드 |
+|---|---|
+| 인터페이스 → 인터페이스 | extends (여러 개 가능: `interface C extends A, B`) |
+| 인터페이스 → 클래스 | implements (여러 개 가능) |
+| 클래스 → 인터페이스 | 불가 |
+
+```java
+class D extends C implements A, B { }   // 상속과 구현을 같이 할 때는 extends가 먼저
+```
+
+#### 구현할 때 public 필수
+
+```java
+interface A {
+    void display();              // 자동으로 public
+}
+
+class B implements A {
+    public void display() { }    // O
+    // void display() { }        // X 에러
+}
+```
+
+오버라이딩은 접근지정어를 줄일 수 없는데, 인터페이스 메소드는 전부 public이라서 구현 클래스에서도 public을 붙여야 한다.
+
+사용처: 윈도우 이벤트, 쓰레드, 데이터베이스 연결, 웹 / 앱 연동
+
+</details>
 </details>
