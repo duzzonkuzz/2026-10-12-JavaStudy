@@ -1876,4 +1876,135 @@ class B implements A {
 사용처: 윈도우 이벤트, 쓰레드, 데이터베이스 연결, 웹 / 앱 연동
 
 </details>
+<details>
+<summary>30. 예외처리 (11.04)</summary>
+
+#### 예외처리란
+
+실행 중에 생길 수 있는 에러에 미리 대비하는 코드. 목적은 비정상 종료 방지
+
+에러를 고치는 게 아니라 건너뛰어서 프로그램이 계속 돌게 하는 것이다.
+
+| | 에러 (Error) | 예외 (Exception) |
+|---|---|---|
+| 정도 | 심각 (메모리 부족 등) | 가벼움 (파일 없음, 잘못된 입력 등) |
+| 코드로 처리 | 불가 | 가능 |
+
+#### Checked vs Unchecked
+
+| | Checked | Unchecked (RuntimeException) |
+|---|---|---|
+| 검사 시점 | 컴파일할 때 (저장하면 빨간 줄) | 실행할 때 |
+| 예외처리 | 필수 (try~catch 또는 throws) | 선택 |
+| 원인 | 바깥 (파일, 네트워크, DB) | 코드 실수, 사용자 입력 |
+| 예 | java.io, java.net, java.sql | 아래 5가지 |
+
+```
+Throwable
+ ├ Error
+ └ Exception
+     ├ IOException, SQLException ...   ← Checked
+     └ RuntimeException                 ← Unchecked
+         ├ ArithmeticException
+         ├ NullPointerException
+         ├ NumberFormatException
+         ├ ArrayIndexOutOfBoundsException
+         └ ClassCastException
+```
+
+예외도 전부 클래스다. 에러가 나면 자바가 예외 객체를 만들어서 던지고(`throw new ArithmeticException(...)`), catch가 그 객체를 받는다.
+
+#### 자주 보는 Unchecked 예외
+
+| 예외 | 원인 | 예 |
+|---|---|---|
+| ArithmeticException | 0으로 나누기 | `10 / 0` |
+| NullPointerException | null로 메소드 호출 | `String s = null; s.length();` |
+| NumberFormatException | 숫자로 못 바꾸는 문자열 | `Integer.parseInt(" 20")` (공백도 안 됨) |
+| ArrayIndexOutOfBoundsException | 배열 범위 초과 | 크기 2인데 `arr[2]` |
+| ClassCastException | 잘못된 형변환 | `A a = new A(); B b = (B) a;` |
+
+- Unchecked는 먼저 if로 막고(유효성 검사), 그래도 필요하면 try~catch
+- 형변환은 실제 객체가 B일 때만 된다. `A a = new B(); B b = (B) a;`는 정상
+
+#### try ~ catch ~ finally
+
+```java
+try {
+    // 에러가 날 수도 있는 코드
+} catch (ArithmeticException e) {
+    // 이 예외가 나면 실행
+} catch (Exception e) {
+    // 나머지 예외 전부 (부모라서 맨 마지막에)
+} finally {
+    // 무조건 실행 (파일 닫기, 연결 끊기). 생략 가능
+}
+```
+
+실행 흐름 (try 안에 A, B, C / catch에 D / finally에 E / 그다음 F)
+
+- 에러 없음: A → B → C → E → F
+- B에서 에러: A → B → D → E → F (C는 건너뜀)
+- try 밖에서 에러: 그 자리에서 프로그램 종료
+
+- catch는 위에서부터 맞는 것 하나만 실행된다. Exception을 먼저 쓰면 아래 catch에 갈 수 없어서 컴파일 에러
+- `catch (Exception e)`는 문법이라 모양 그대로 쓴다. e는 예외 객체를 담는 변수 이름
+- `e.getMessage()`: 에러 메시지만 (`/ by zero`) / `e.printStackTrace()`: 종류와 몇 번째 줄인지까지
+- 감싸는 범위: for 안을 감싸면 에러 난 바퀴만 건너뛰고 계속, for 전체를 감싸면 반복이 끝난다
+
+#### 파일 닫기: finally vs try-with-resources
+
+```java
+FileReader fr = null;
+try {
+    fr = new FileReader("movie.txt");
+    // 읽기
+} catch (Exception ex) {
+    System.out.println(ex.getMessage());
+} finally {
+    try {
+        if (fr != null) fr.close();   // 파일을 못 열었으면 null이라 확인 필요
+    } catch (Exception ex) { }        // close()도 Checked 예외라 한 번 더 감싼다
+}
+
+// try-with-resources (Java 7): try ( ) 안에서 연 것은 자동으로 닫힌다
+try (FileReader fr = new FileReader("movie.txt")) {
+    // 읽기
+} catch (Exception ex) {
+    ex.printStackTrace();
+}
+```
+
+#### 예외 처리 방법 4가지
+
+| 방법 | 코드 | 뜻 |
+|---|---|---|
+| 복구 (직접 처리) | `try ~ catch` | 그 자리에서 처리 |
+| 회피 (간접 처리) | `메소드() throws 예외` | 메소드를 부른 쪽에 처리를 넘긴다 |
+| 발생 | `throw new 예외("메시지")` | 일부러 발생시킨다 (테스트, 규칙 위반) |
+| 사용자 정의 | `class MyException extends Exception` | 직접 만든 예외 |
+
+```java
+static void fff() throws Exception { }          // Checked → 부른 쪽에서 반드시 처리
+static void ggg() throws RuntimeException { }   // Unchecked → 처리 안 해도 됨
+
+try {
+    fff();                    // throws로 넘어온 예외는 부른 쪽에서 try~catch
+} catch (Exception e) { }
+
+// 사용자 정의 + throw
+class MyException extends Exception {
+    public MyException(String msg) { super(msg); }
+}
+
+void withdraw(int money) throws MyException {
+    if (money > balance) {
+        throw new MyException("잔액 부족");
+    }
+}
+```
+
+main까지 throws로 계속 넘기면 결국 JVM이 받아서 프로그램이 종료된다.
+
+</details>
 </details>
