@@ -2007,4 +2007,110 @@ void withdraw(int money) throws MyException {
 main까지 throws로 계속 넘기면 결국 JVM이 받아서 프로그램이 종료된다.
 
 </details>
+<details>
+<summary>31. 중첩 클래스 (11.05)</summary>
+
+클래스 안에 만든 클래스. 안쪽 클래스는 바깥 클래스의 변수와 메소드를 private까지 바로 쓸 수 있다. 주로 쓰레드, 윈도우, 서버 프로그램에서 쓰고 웹(스프링)에서는 거의 안 쓴다.
+
+| 종류 | 위치 | 비중 |
+|---|---|---|
+| 멤버 클래스 | 클래스 안 | 중요 |
+| 정적 멤버 클래스 | 클래스 안 + static | 가끔 |
+| 지역 클래스 | 메소드 안 | 거의 안 씀 |
+| 익명 클래스 | 객체를 만드는 자리 | 가장 많이 씀 |
+
+#### 멤버 클래스
+
+```java
+class Outer {
+    private String name = "홍길동";
+
+    class Inner {
+        void print() {
+            System.out.println(name);    // 바깥의 private 변수도 바로 사용
+        }
+    }
+}
+
+Outer p = new Outer();             // 바깥 객체를 먼저 만들고
+Outer.Inner c = p.new Inner();     // 그 객체로 안쪽 객체 생성
+```
+
+변수 이름이 겹칠 때
+
+```java
+class Outer5 {
+    int value = 10;
+    class Inner {
+        int value = 20;
+        void method() {
+            int value = 30;
+            System.out.println(value);               // 30 지역 변수
+            System.out.println(this.value);          // 20 Inner
+            System.out.println(Outer5.this.value);   // 10 Outer5
+        }
+    }
+}
+```
+
+예: 프로그레스바. BarThread를 JFrame 클래스 안에 만들어서 바깥의 go()와 bar를 바로 쓴다.
+
+```java
+class 중첩클래스_2 extends JFrame {
+    JProgressBar[] bar;
+    void go() { ... }                   // 바 채우기
+
+    class BarThread extends Thread {    // 멤버 클래스
+        public void run() {
+            go();                       // 바깥 메소드를 바로 호출
+        }
+    }
+}
+```
+
+밖에 따로 만들면 바깥 객체를 넘겨받아야 해서 코드가 복잡해진다.
+
+#### 정적 멤버 클래스, 지역 클래스
+
+```java
+class Outer2 {
+    static class Inner { }    // 바깥 객체 없이 new Outer2.Inner()로 생성, 바깥의 static 멤버만 사용 가능
+
+    void print() {
+        class Local { }       // 메소드 안에서만 사용
+    }
+}
+```
+
+#### 익명 클래스
+
+클래스를 따로 만들지 않고 그 자리에서 상속 + 오버라이딩 + 객체 생성을 한 번에 한다. 이름이 없어서 다시 쓸 수 없는 일회용
+
+```java
+// 원래 방식
+class 개 extends 동물 {
+    void sound() { System.out.println("멍멍"); }
+}
+동물 a = new 개();
+
+// 익명 클래스
+동물 a = new 동물() {
+    void sound() { System.out.println("멍멍"); }
+};                            // 끝에 세미콜론
+```
+
+예: 표(JTable) 셀 수정 막기
+
+```java
+model = new DefaultTableModel(row, col) {
+    @Override
+    public boolean isCellEditable(int row, int column) {
+        return false;         // 이 메소드 하나만 바꿔서 사용
+    }
+};
+```
+
+`new 클래스() { }` 모양이면 익명 클래스다. 람다식(`() -> { }`)은 이걸 더 짧게 쓴 것 (28번)
+
+</details>
 </details>
