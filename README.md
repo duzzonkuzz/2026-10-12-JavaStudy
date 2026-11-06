@@ -2113,4 +2113,100 @@ model = new DefaultTableModel(row, col) {
 `new 클래스() { }` 모양이면 익명 클래스다. 람다식(`() -> { }`)은 이걸 더 짧게 쓴 것 (28번)
 
 </details>
+<details>
+<summary>32. java.lang - Object, 객체 복사 (11.06)</summary>
+
+#### java.lang
+
+import 없이 쓰는 기본 클래스 묶음
+
+| 클래스 | 역할 |
+|---|---|
+| Object | 모든 클래스의 최상위 클래스 |
+| String | 문자열 저장, 제어 |
+| StringBuffer / StringBuilder | 문자열을 빠르게 이어 붙이기 |
+| Wrapper | 기본형을 클래스로 (int → Integer, double → Double, boolean → Boolean, char → Character ...) |
+| Math | 수학 관련 기능 |
+| System | 출력, 입력, 시간, gc |
+
+- StringBuffer는 동기화(쓰레드 여러 개에서 안전), StringBuilder는 동기화 없음(대신 더 빠름)
+- 다른 기본 라이브러리: java.util, java.text, java.io, java.net, java.sql
+
+#### Object의 주요 메소드
+
+모든 클래스가 Object를 상속받아서 아래 메소드를 바로 쓸 수 있다.
+
+| 메소드 | 기능 |
+|---|---|
+| toString() | 객체를 문자열로. 기본은 `클래스명@해시코드`, `println(a)`하면 자동 호출 |
+| equals() | 객체 비교. 기본은 주소 비교(==) |
+| hashCode() | 객체 구분 번호 |
+| getClass() | 객체의 클래스 정보 |
+| clone() | 객체 복제 |
+| finalize() | 객체가 메모리에서 해제될 때 호출 (Java 9부터 사용 비권장) |
+
+```java
+A a = new A("홍길동");
+A b = new A("홍길동");
+a.equals(b);          // false → 내용이 같아도 주소가 다른 객체
+
+@Override
+public String toString() {        // 보통 객체 정보를 출력하도록 오버라이딩
+    return "이름: " + name;
+}
+System.out.println(a);            // 이름: 홍길동
+```
+
+내용으로 비교하려면 equals()를 오버라이딩한다. String은 이미 오버라이딩돼 있어서 내용 비교가 되고, lombok @Data도 자동으로 만들어 준다.
+
+#### finalize()
+
+```java
+Main m = new Main(100);   // 생성
+m.display();              // 활용
+m = null;                 // 주소 삭제
+System.gc();              // GC 요청 → 메모리가 해제될 때 finalize() 호출
+```
+
+- finalize()는 객체를 없애는 메소드가 아니라, 없어질 때 호출되는 메소드
+- System.gc()는 요청일 뿐이라 바로 실행된다는 보장이 없다.
+
+#### 객체 복사: 대입 vs clone()
+
+```java
+class Sawon implements Cloneable {    // Cloneable을 구현해야 clone() 사용 가능
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+}
+
+Sawon shim = (Sawon) hong.clone();    // 새 객체 생성 (리턴형이 Object라 형변환 필요)
+Sawon kim = shim;                     // 주소만 복사 → 같은 객체
+kim.setName("김두한");                 // shim의 이름도 김두한으로 바뀐다
+```
+
+| | 대입 (`kim = shim`) | clone() |
+|---|---|---|
+| 새 객체 | X (같은 객체) | O |
+| 한쪽을 수정하면 | 둘 다 바뀐다 | 서로 영향 없음 |
+
+clone()은 필드 값을 그대로 복사한다(얕은 복사). 그래서 배열 같은 참조형 필드는 원본과 같은 배열을 가리킨다.
+
+#### 메소드에 참조형 넘기기
+
+```java
+static void arrayUpdate(int[] arr) {    // arr = a (주소가 넘어온다)
+    arr[0] = 100;
+}
+
+int[] a = new int[5];
+arrayUpdate(a);
+System.out.println(a[0]);               // 100 → 메소드 안에서 바꾼 값이 원본에 반영
+```
+
+- 배열, 객체는 주소가 넘어가서 메소드 안에서 바꾸면 원본도 바뀐다. (memberUpdate(mm)도 같다)
+- String은 참조형이지만 값을 바꿀 수 없어서(불변) 메소드 안에서 바꿔도 원본은 그대로
+
+</details>
 </details>
