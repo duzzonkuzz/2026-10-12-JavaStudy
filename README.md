@@ -2209,4 +2209,200 @@ System.out.println(a[0]);               // 100 → 메소드 안에서 바꾼 �
 - String은 참조형이지만 값을 바꿀 수 없어서(불변) 메소드 안에서 바꿔도 원본은 그대로
 
 </details>
+<details>
+<summary>33. Object (2) toString, equals, hashCode 오버라이딩 (11.09)</summary>
+
+#### Object = 가장 큰 데이터형
+
+```java
+Object o = 10;
+o = 0.5;
+o = "Hello";
+o = new A();     // 기본형, 참조형 전부 담을 수 있다
+```
+
+- java.lang에서 Object를 뺀 나머지(String, System, Math ...)는 final이라 상속해서 바꿀 수 없다.
+- 라이브러리가 Object로 돌려주면(예: 콤보박스 `getSelectedItem()`) 형변환이나 toString()으로 바꿔서 쓴다. 이걸 없애 주는 게 제네릭 `< >`
+
+#### toString()
+
+```java
+@Override
+public String toString() {
+    return "이름:" + name + ",성별:" + sex;
+}
+
+System.out.println(m1);          // 이름:홍길동,성별:남자 (toString() 자동 호출)
+String s = "회원: " + m1;         // 문자열과 + 할 때도 자동 호출
+```
+
+- 오버라이딩 전에는 `Member@1b6d3586`처럼 `클래스명@해시코드`가 나온다.
+- String, Integer, ArrayList는 이미 오버라이딩돼 있어서 출력하면 내용이 바로 보인다.
+
+#### equals() + hashCode()
+
+```java
+@Override
+public boolean equals(Object obj) {
+    if (obj instanceof Sawon) {           // Sawon 객체인지 확인
+        Sawon s = (Sawon) obj;            // Object → Sawon 형변환
+        return sabun == s.sabun && name.equals(s.name);
+    }
+    return false;
+}
+
+@Override
+public int hashCode() {
+    return Objects.hash(sabun, name);     // 같은 값이면 같은 번호
+}
+
+Sawon s1 = new Sawon(1, "박문수");
+Sawon s2 = new Sawon(1, "박문수");
+s1.equals(s2);     // true  (내용 비교)
+s1 == s2;          // false (주소는 다름)
+```
+
+- equals를 오버라이딩하면 hashCode도 같이 오버라이딩해야 한다.
+- HashSet은 hashCode()로 먼저 비교하고, 같을 때만 equals()로 확인한다. hashCode를 안 바꾸면 s1, s2가 중복으로 걸러지지 않고 둘 다 들어간다.
+- lombok `@Data`를 붙이면 toString, equals, hashCode가 자동으로 만들어진다.
+
+</details>
+
+<details>
+<summary>34. System (11.09)</summary>
+
+전부 static 메소드라 new 없이 `System.메소드()`로 쓴다.
+
+| 기능 | 메소드 |
+|---|---|
+| 프로그램 종료 | `System.exit(0)` (0 = 정상 종료) |
+| 출력 | `System.out.print()` / `println()` / `printf()` |
+| 입력 | `System.in.read()` (보통은 Scanner 사용) |
+| 메모리 회수 요청 | `System.gc()` |
+| 시간 측정 | `System.currentTimeMillis()` (1/1000초) |
+| 운영체제, 자바 정보 | `System.getProperty("os.name")` |
+
+#### 종료 범위
+
+| | 끝내는 범위 | 아래 코드 |
+|---|---|---|
+| break | 반복문만 | 실행됨 |
+| return | 메소드만 | 메소드 밖은 계속 |
+| System.exit(0) | 프로그램 전체 | 실행 안 됨 |
+
+#### 걸린 시간 측정
+
+```java
+long start = System.currentTimeMillis();
+// 작업
+long end = System.currentTimeMillis();
+System.out.println("걸린 시간:" + (end - start));    // 밀리초
+```
+
+#### System.in.read()
+
+```java
+int num = System.in.read();       // '1'을 입력하면 49 (문자 코드값)
+System.out.println(num - '0');    // 49 - 48 = 1
+```
+
+- 글자 하나의 코드값을 읽고, 엔터도 따로 읽힌다. Checked 예외라 try~catch도 필요
+- 불편해서 실제로는 Scanner를 쓴다.
+
+getProperty 키: `os.name`(운영체제), `user.name`(사용자), `user.home`(홈 폴더), `java.version`(자바 버전)
+
+</details>
+
+<details>
+<summary>35. String (3) 분리, 정규식, 활용 (11.09)</summary>
+
+#### 문자열 관련 클래스
+
+| 클래스 | 용도 | 패키지 |
+|---|---|---|
+| String | 문자열 저장, 제어 | java.lang |
+| StringBuffer / StringBuilder | `append()`로 문자열 결합 | java.lang |
+| StringTokenizer | 구분자로 문자열 나누기 | java.util |
+
+#### split vs StringTokenizer
+
+```java
+String data = "계란,새송이버섯,대파,참기름";
+
+String[] datas = data.split(",");                 // 배열로 받는다
+
+StringTokenizer st = new StringTokenizer(data, ",");
+System.out.println(st.countTokens());             // 나눠진 단어 개수
+while (st.hasMoreTokens()) {                      // 남은 단어가 있는 동안
+    System.out.println(st.nextToken());           // 하나씩 꺼낸다
+}
+```
+
+| | split | StringTokenizer |
+|---|---|---|
+| 구분자 | 정규식 (특수문자 앞에 `\\`) | 문자 그대로 |
+| 결과 | 배열 | 하나씩 꺼내기 |
+| 빈 값 (`"a,,b"`) | a, 빈 문자열, b (빈 칸 유지) | a, b (빈 칸 건너뜀 → 칸이 밀릴 수 있다) |
+
+```java
+"red|green".split("|");                     // r, e, d, |, g ... 한 글자씩 다 쪼개진다
+"red|green".split("\\|");                   // red, green
+new StringTokenizer("red|green", "|");      // red, green (\\ 필요 없음)
+```
+
+#### 정규식 기호
+
+| 기호 | 뜻 |
+|---|---|
+| `[^ ]` | 괄호 안의 것 제외 |
+| `\|` | 또는 |
+| `?` | 0개 또는 1개 |
+| `+` | 1개 이상 |
+| `*` | 0개 이상 |
+| `.` | 아무 글자 하나 |
+
+#### 메소드 쓰임새
+
+```java
+String url = "https://www.genie.co.kr/chart/genre";
+
+url.substring(url.lastIndexOf("/") + 1);   // "genre"  마지막 / 다음부터
+url.substring(0, url.indexOf(":"));        // "https"  처음부터 : 전까지
+```
+
+| 메소드 | 쓰임 |
+|---|---|
+| equals | 대소문자 구분 → 로그인 |
+| equalsIgnoreCase | 대소문자 무시 → 검색 |
+| contains | 검색 |
+| startsWith | 자동 완성 |
+| endsWith | 파일 확장자 확인 |
+
+문자열 비교는 ==가 아니라 equals
+
+#### 예제: 지니 장르별 차트
+
+```java
+public class GenieMusic {
+    private static MusicVo[] musics = new MusicVo[50];
+    private static String[] category = {
+        "https://www.genie.co.kr/chart/top200",
+        "https://www.genie.co.kr/chart/genre?ditc=D&ymd=20261108&genrecode=M0100",   // 가요
+        // POP, OST, 트롯, JAZZ, CLASSIC ...
+    };
+
+    public void getData(int cno) {         // 요청할 때마다 다시 호출할 수 있게 메소드로
+        Document doc = Jsoup.connect(category[cno]).get();
+        // 크롤링 → musics[i]에 저장 (26번과 같은 방식)
+    }
+}
+
+// UserMain
+int cno = scan.nextInt();
+gm.getData(cno - 1);                       // 메뉴 번호 - 1 = 배열 index
+```
+
+생성자나 static 블록은 1번만 실행돼서, 카테고리를 바꿀 때마다 다시 불러오려면 일반 메소드로 만들어야 한다.
+
+</details>
 </details>
