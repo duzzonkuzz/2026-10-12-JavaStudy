@@ -2405,4 +2405,151 @@ gm.getData(cno - 1);                       // 메뉴 번호 - 1 = 배열 index
 생성자나 static 블록은 1번만 실행돼서, 카테고리를 바꿀 때마다 다시 불러오려면 일반 메소드로 만들어야 한다.
 
 </details>
+<details>
+<summary>36. 포맷(java.text), Math (11.10)</summary>
+
+#### 날짜 포맷 SimpleDateFormat
+
+```java
+Date date = new Date();
+SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+System.out.println(sdf.format(date));     // 2026-11-10 17:05:09
+```
+
+| 기호 | 뜻 |
+|---|---|
+| yyyy / yy | 년 (2026 / 26) |
+| MM / M | 월 (11, 05 / 5) |
+| dd / d | 일 |
+| HH / hh | 시 (24시간 / 12시간) |
+| mm | 분 |
+| ss | 초 |
+
+월은 대문자 `MM`, 분은 소문자 `mm`. `yyyy-mm-dd`로 쓰면 월 자리에 분이 나온다.
+
+#### 숫자 포맷
+
+```java
+new DecimalFormat("###,###,###").format(100000);          // 100,000
+
+double[] limits = {0, 60, 70, 80, 90};
+String[] grades = {"F", "D", "C", "B", "A"};
+new ChoiceFormat(limits, grades).format(85);               // B (범위별로 값 고르기)
+
+NumberFormat.getInstance().format(1234567.89);             // 1,234,567.89
+NumberFormat.getCurrencyInstance().format(1234567.89);     // ₩1,234,568
+NumberFormat.getPercentInstance().format(0.25);            // 25%
+```
+
+NumberFormat은 추상 클래스라 new 대신 `getInstance()`로 객체를 받는다.
+
+#### Math
+
+전부 static 메소드라 `Math.메소드()`로 쓴다.
+
+| 메소드 | 기능 | 예 |
+|---|---|---|
+| `random()` | 0.0 이상 1.0 미만 난수 | `(int)(Math.random() * 100) + 1` → 1~100 |
+| `ceil()` | 올림, double로 리턴 | `(int)Math.ceil(1938 / 10.0)` → 194 (총 페이지) |
+| `round()` | 반올림, long으로 리턴 | `Math.round(10.5)` → 11 |
+| `max()` / `min()` | 큰 값 / 작은 값 | `Math.max(10, 20)` → 20 |
+| `abs()` | 절대값 | `Math.abs(-1)` → 1 |
+
+오라클에도 CEIL, ROUND가 같은 기능으로 있다.
+
+</details>
+
+<details>
+<summary>37. StringBuffer, StringBuilder (11.10)</summary>
+
+#### String과 비교
+
+| | String | StringBuffer | StringBuilder |
+|---|---|---|---|
+| 문자열 변경 | 불가능 (불변) | 가능 | 가능 |
+| 문자열 추가 | 새 객체 생성 | 기존 객체 변경 | 기존 객체 변경 |
+| 동기화 | 해당 없음 | 지원 | 미지원 |
+| 속도 | 반복 변경 시 느림 | 비교적 느림 | 빠름 |
+| 용도 | 일반 문자열 | 쓰레드끼리 공유 | 일반 문자열 조립 |
+
+String에 `+=`를 반복하면 매번 새 문자열이 만들어진다. "a"를 5만 번 붙이면 String은 약 450ms, StringBuilder는 약 2ms 걸렸다.
+
+#### 주요 메소드
+
+```java
+StringBuilder sb = new StringBuilder("Java");
+sb.append(" Hello");          // Java Hello              끝에 추가
+sb.insert(4, "Language");     // JavaLanguage Hello      특정 위치에 삽입
+sb.delete(0, 4);              // Language Hello          0~3 삭제 (end는 포함 안 함)
+sb.replace(0, 4, "Spring");   // Springuage Hello        0~3을 Spring으로
+sb.deleteCharAt(0);           // pringuage Hello         한 글자 삭제
+sb.reverse();                 // olleH egaugnirp         뒤집기
+String s = sb.toString();     // String으로 변환
+```
+
+`length()`, `charAt()`도 String과 똑같이 쓸 수 있다. StringBuffer도 메소드는 전부 같다.
+
+#### 예제: 웹 페이지 HTML 읽기
+
+```java
+URL url = URI.create("https://www.10000recipe.com/recipe/list.html").toURL();   // new URL()은 Java 20부터 비권장
+HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+StringBuilder sb = new StringBuilder();
+while (true) {
+    String line = br.readLine();     // 한 줄씩 읽기, 끝이면 null
+    if (line == null) break;
+    sb.append(line).append("\n");
+}
+System.out.println(sb.toString());
+```
+
+</details>
+
+<details>
+<summary>38. Wrapper 클래스 (11.10)</summary>
+
+기본형을 객체로 쓸 수 있게 만든 클래스
+
+| 기본형 | Wrapper | 문자열 → 기본형 |
+|---|---|---|
+| int | Integer | `Integer.parseInt("10")` |
+| long | Long | `Long.parseLong("10")` |
+| double | Double | `Double.parseDouble("10.5")` |
+| boolean | Boolean | `Boolean.parseBoolean("true")` |
+| char | Character | |
+| byte, short, float | Byte, Short, Float | |
+
+- 웹이나 윈도우에서 받은 값은 전부 String이라, parse로 필요한 형으로 바꿔서 쓴다.
+- 제네릭에는 클래스만 들어간다. `<int>`는 안 되고 `<Integer>`
+
+#### Boxing / Unboxing
+
+```java
+Integer i = 100;     // Boxing: 기본형 → Wrapper (자동)
+int n = i;           // Unboxing: Wrapper → 기본형 (자동)
+```
+
+Wrapper끼리 비교도 equals를 쓴다. `Integer a = 128, b = 128;`이면 `a == b`는 false (주소 비교)
+
+#### 그 밖의 기능
+
+```java
+Integer.MAX_VALUE              // 2147483647 (int 최대값)
+Integer.MIN_VALUE              // -2147483648
+Integer.toBinaryString(10)     // "1010" (2진수)
+Integer.toHexString(10)        // "a"    (16진수)
+Integer.toOctalString(10)      // "12"   (8진수)
+```
+
+parseInt(null)은 NumberFormatException이 나서, null일 수 있는 값은 먼저 확인한다.
+
+```java
+if (s != null) {
+    int a = Integer.parseInt(s);
+}
+```
+
+</details>
 </details>
