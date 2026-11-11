@@ -2552,4 +2552,194 @@ if (s != null) {
 ```
 
 </details>
+<details>
+<summary>39. 리플렉션, 어노테이션 (11.11)</summary>
+
+#### 리플렉션
+
+실행 중에 클래스 정보(변수, 생성자, 메소드)를 읽어서 직접 조작하는 기술. new 없이 객체를 만들고, private 변수에도 접근할 수 있다.
+
+스프링, MyBatis, JPA가 이걸로 객체 생성과 메소드 호출을 자동으로 처리한다. 직접 만들어 쓸 일은 거의 없고, 원리만 알면 된다.
+
+| 클래스 구성 | 리플렉션 클래스 |
+|---|---|
+| 클래스 | Class |
+| 변수 | Field |
+| 생성자 | Constructor |
+| 메소드 | Method |
+
+#### Class 객체 얻기
+
+```java
+Class cls = String.class;
+Class cls = str.getClass();
+Class cls = Class.forName("com.sist.reflect.Member");   // 패키지명부터 전부
+```
+
+#### 조작하기
+
+```java
+Class cls = Class.forName("com.sist.reflect.Member");
+
+// 객체 생성 (생성자 호출)
+Object obj = cls.getDeclaredConstructor().newInstance();                    // new Member()
+Object obj2 = cls.getDeclaredConstructor(int.class, String.class, String.class)
+                 .newInstance(2, "박문수", "부산");                          // new Member(2, "박문수", "부산")
+
+// 변수
+Field f = cls.getDeclaredField("name");
+f.setAccessible(true);           // private 변수에 접근 허용
+f.set(obj, "심청이");             // 값 쓰기
+f.get(obj);                      // 값 읽기
+
+// 메소드
+Method m = cls.getDeclaredMethod("insert");
+m.invoke(obj);                   // obj.insert()
+
+// 전체 목록
+cls.getDeclaredFields();         // Field[]
+cls.getDeclaredConstructors();   // Constructor[]
+cls.getDeclaredMethods();        // Method[]
+```
+
+- `getDeclared~`: 그 클래스에 선언된 것 전부 (private 포함, 상속받은 것 제외)
+- `getMethods()`, `getConstructor()`: public만 (상속받은 것 포함)
+- 장점: 프레임워크 자동화, 재사용, 유지보수
+- 단점: 직접 호출보다 느리다, private 접근이 가능해서 보안 문제, 코드가 읽기 어렵다
+
+#### 어노테이션
+
+클래스, 변수, 메소드에 표시를 붙여서 바로 찾을 수 있게 하는 것. 표시 자체에는 기능이 없고, 리플렉션으로 찾아서 처리한다.
+
+- 스프링: `@Controller` `@Service` `@Autowired` `@GetMapping` `@RequestMapping`
+- MyBatis: `@Select` `@Insert` `@Update` `@Delete`
+
+```java
+@Retention(RetentionPolicy.RUNTIME)   // 실행 중에도 읽을 수 있게 (없으면 리플렉션으로 못 찾는다)
+@Target(ElementType.METHOD)           // 메소드 위에 붙이는 용도
+public @interface RequestMapping {
+    String value();
+}
+
+class Board {
+    @RequestMapping("1")
+    public void list() { System.out.println("list"); }
+
+    @RequestMapping("2")
+    public void insert() { System.out.println("insert"); }
+}
+
+// 메뉴 번호와 같은 어노테이션이 붙은 메소드를 찾아서 실행
+Class cls = Class.forName("com.sist.reflect.Board");
+Object obj = cls.getDeclaredConstructor().newInstance();
+for (Method m : cls.getDeclaredMethods()) {
+    RequestMapping rm = m.getAnnotation(RequestMapping.class);
+    if (rm != null && Integer.parseInt(rm.value()) == menu) {
+        m.invoke(obj);
+    }
+}
+```
+
+if~else로 메뉴마다 메소드를 연결하지 않아도, 메소드에 어노테이션만 붙이면 자동으로 찾아서 실행된다. 스프링이 URL 요청을 메소드에 연결하는 방식이 이것이다.
+
+</details>
+
+<details>
+<summary>40. 정규식 Pattern, Matcher (11.11)</summary>
+
+지정한 패턴으로 문자열을 검색하거나 검사(유효성 검사)한다. 자바, 자바스크립트, 오라클에서 같은 기호를 쓴다. 기본 기호는 35번 참고
+
+#### 추가 기호
+
+| 기호 | 뜻 | 예 |
+|---|---|---|
+| `\\d` | 숫자 (= `[0-9]`) | `\\d{3}` |
+| `\\s` | 공백 | |
+| `\\w` | 알파벳, 숫자, `_` 한 글자 | |
+| `{n}` | n개 | `[가-힣]{5}` 한글 5글자 |
+| `{n,m}` | n~m개 | `[0-9]{1,3}` → 1, 12, 123 |
+| `^` (괄호 밖) | 시작 | `^홍` 홍으로 시작 |
+| `$` | 끝 | `[A-Z]$` 대문자로 끝 |
+| `( )` | 묶음 | `(abc)` → abc 그대로 |
+
+- `[abc]`는 a, b, c 중 한 글자. `(abc)`는 abc라는 묶음
+- 자바 문자열 안에서는 `\`를 두 번 쓴다. (`\d` → `"\\d"`)
+
+```java
+"010-1234-5678".matches("\\d{3}-\\d{4}-\\d{4}")                      // 전화번호 형식
+"211.238.142.21".matches("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}")  // IP 형식
+"홍길동".matches("^홍[가-힣]+")                                          // 홍으로 시작하는 한글
+"colour".matches("colou?r")                                           // u가 있어도 없어도 true
+```
+
+#### matches vs find
+
+- `matches()`: 문자열 전체가 패턴과 맞아야 true (`"abc123".matches("[a-z]+")` → false)
+- `find()`: 문자열 안에서 패턴에 맞는 부분을 찾는다
+
+```java
+String res = "맛있,맛있고,맛있게,맛없다,맛있습니다";
+Pattern p = Pattern.compile("맛있[가-힣]+");   // 맛있 뒤에 한글 1개 이상
+Matcher m = p.matcher(res);                    // 검색 대상 지정
+while (m.find()) {                             // 다음으로 맞는 부분이 있는 동안
+    System.out.println(m.group());             // 맛있고, 맛있게, 맛있습니다
+}
+```
+
+`맛있`만 있는 건 뒤에 한글이 없어서 `+`(1개 이상)에 걸리지 않는다.
+
+#### 그룹
+
+```java
+Matcher m = Pattern.compile("(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})\\.(\\d{1,3})").matcher("211.238.142.21");
+m.find();
+m.group();     // 211.238.142.21  전체
+m.group(1);    // 211.238.142     첫 번째 ( )
+m.group(2);    // 21              두 번째 ( )
+```
+
+그룹 번호는 여는 괄호 `(` 순서대로 매겨진다.
+
+쓰임: 이메일, 전화번호, 비밀번호 검증 / 크롤링 데이터 정리 / 로그 분석 / 오라클 `REGEXP_LIKE`
+
+</details>
+
+<details>
+<summary>41. 날짜, 시간 LocalDateTime (11.11)</summary>
+
+java.time 패키지 (Java 8). 예전 Date, Calendar를 대신한다.
+
+| 클래스 | 저장 |
+|---|---|
+| LocalDateTime | 날짜 + 시간 |
+| LocalDate | 날짜 |
+| LocalTime | 시간 |
+
+```java
+LocalDateTime now = LocalDateTime.now();                         // 현재
+LocalDateTime dt = LocalDateTime.of(2026, 11, 11, 12, 30, 30);   // 특정 날짜, 시간 (월은 1~12 그대로)
+
+now.plusDays(4).plusHours(3);    // 4일 3시간 뒤
+now.minusMonths(1);              // 1달 전
+
+now.getYear();                   // 년
+now.getMonthValue();             // 월
+now.getDayOfMonth();             // 일
+now.getHour();                   // 시
+```
+
+plus, minus는 원본을 바꾸지 않고 새 객체를 돌려준다. (String처럼 불변)
+
+#### 문자열 ↔ 날짜
+
+```java
+DateTimeFormatter ff = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+LocalDateTime t = LocalDateTime.parse("2026-03-31 15:47:40", ff);   // 문자열 → 날짜
+String s = dt.format(ff);                                           // 날짜 → "2026-11-11 12:30:30"
+```
+
+패턴 기호는 SimpleDateFormat과 같다. (36번: MM 월 / mm 분, HH 24시간 / hh 12시간)
+
+</details>
 </details>
