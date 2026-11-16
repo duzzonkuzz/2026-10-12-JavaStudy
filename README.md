@@ -3069,4 +3069,169 @@ public class BookMain extends JFrame implements ActionListener, MouseListener {
 - 검색 결과를 보여줄 때는 페이지 버튼 패널을 숨긴다. (`p.setVisible(false)`)
 
 </details>
+<details>
+<summary>47. Set - HashSet, TreeSet (11.16)</summary>
+
+| | HashSet | TreeSet |
+|---|---|---|
+| 중복 | 불가 | 불가 |
+| 순서 | 보장 안 됨 | 자동 정렬 |
+| 쓰임 | 중복 제거 (가장 많이 씀), 채팅 접속자 | 범위 검색, 순위, 가격순 정렬 |
+
+#### HashSet
+
+```java
+HashSet<String> set = new HashSet<String>();
+set.add("사과");
+set.add("사과");          // 같은 데이터는 들어가지 않는다
+set.remove("사과");       // index가 아니라 값으로 삭제
+set.size();
+set.clear();
+set.isEmpty();
+for (String f : set) { }  // index가 없어서 일반 for는 못 쓴다 → for-each
+```
+
+직접 만든 클래스를 넣을 때는 hashCode와 equals를 오버라이딩해야 같은 값이 중복으로 걸러진다. (33번)
+
+#### List 중복 제거
+
+```java
+List<String> list = Arrays.asList(names);             // 중복 있는 목록
+Set<String> set = new HashSet<String>(list);           // 중복 제거
+List<String> list2 = new ArrayList<String>(set);       // 다시 List로 (index로 다루기 편해서)
+```
+
+#### TreeSet 검색
+
+```java
+TreeSet<Integer> t = new TreeSet<Integer>();   // [10, 30, 45, 50, 70, 90]
+
+t.headSet(50);     // [10, 30, 45]   50 미만
+t.tailSet(50);     // [50, 70, 90]   50 이상
+t.higher(30);      // 45             30보다 바로 큰 값
+t.lower(30);       // 10             30보다 바로 작은 값
+t.ceiling(50);     // 50             같거나 큰 값
+t.floor(50);       // 50             같거나 작은 값
+t.first();         // 10             가장 작은 값
+t.last();          // 90             가장 큰 값
+```
+
+`Set<Integer> t = new TreeSet<Integer>()`로 선언하면 위 메소드를 쓸 수 없다. 부모(Set) 타입 변수로는 부모에 있는 메소드만 보이기 때문 (27번 다형성)
+
+</details>
+
+<details>
+<summary>48. Iterator, Queue, Stack (11.16)</summary>
+
+#### Iterator / ListIterator
+
+컬렉션의 데이터를 하나씩 꺼내는 도구. 반복 도중에 안전하게 삭제할 수 있다.
+
+```java
+Iterator<String> it = list.iterator();
+while (it.hasNext()) {          // 다음 데이터가 있는 동안
+    String f = it.next();       // 꺼내기
+    if (f.equals("참외")) {
+        it.remove();            // 지금 꺼낸 데이터 삭제
+    }
+}
+```
+
+| | Iterator | ListIterator |
+|---|---|---|
+| 사용 | List, Set, Map | List만 |
+| 방향 | 앞으로만 | 앞뒤 (hasPrevious, previous) |
+| 기능 | 조회, 삭제 | 조회, 추가, 수정, 삭제 |
+
+- 단순 조회 → for-each
+- 반복 도중 삭제 → Iterator
+- for-each 안에서 `list.remove()`를 하면 ConcurrentModificationException
+
+#### Queue (FIFO), Stack (LIFO)
+
+```java
+Queue<String> q = new LinkedList<String>();
+q.offer("홍길동");      // 추가
+q.peek();              // 맨 앞 데이터 보기 (꺼내지 않음)
+q.poll();              // 맨 앞 데이터 꺼내기 (삭제됨)
+
+Stack<String> s = new Stack<String>();
+s.push("사과");         // 추가
+s.peek();              // 맨 위(마지막) 데이터 보기
+s.pop();               // 맨 위 데이터 꺼내기 (삭제됨)
+```
+
+- Queue: 먼저 넣은 게 먼저 나온다. 줄 서기. 네트워크, 운영체제, Kafka
+- Stack: 나중에 넣은 게 먼저 나온다. 쌓기. 메소드 호출 구조
+
+</details>
+
+<details>
+<summary>49. Map - HashMap (11.16)</summary>
+
+키와 값을 같이 저장한다. 키는 중복 불가(구분자), 값은 중복 가능
+
+```java
+Map<String, String> map = new HashMap<String, String>();
+map.put("id", "admin");        // 저장
+map.put("id", "hong");         // 같은 키 → 덮어쓴다 (admin 사라짐)
+map.get("id");                 // hong   (없는 키면 null)
+map.remove("id");              // 키로 삭제
+map.containsKey("id");         // 키가 있는지
+map.containsValue("hong");     // 값이 있는지
+map.size();
+map.clear();
+map.isEmpty();
+```
+
+#### 전체 읽기
+
+```java
+for (String key : map.keySet()) {                       // 키 전체
+    System.out.println(key + ":" + map.get(key));
+}
+
+for (String value : map.values()) { }                   // 값 전체
+
+for (Map.Entry<String, String> e : map.entrySet()) {    // 키 + 값
+    System.out.println(e.getKey() + ":" + e.getValue());
+}
+```
+
+#### 쓰임
+
+- HashMap (가장 많이 씀, 동기화 X) / Hashtable (예전 버전, 동기화 O)
+- JSON(`키:값`)과 같은 구조라 자바스크립트, React, Vue와 데이터 주고받을 때
+- 쿠키, 세션, 요청값, 응답값 저장
+- MyBatis: SQL 문장을 이름(키)으로 관리 (`map.put("boardList", "SELECT * FROM board")`)
+- 스프링: 클래스(객체)를 이름으로 관리
+
+```java
+class Container {                        // 스프링이 하는 일을 흉내 낸 것
+    Map<String, I> map = new HashMap<String, I>();
+
+    public Container() {
+        map.put("a", new A());           // 객체를 미리 만들어서 이름으로 저장
+        map.put("b", new B());
+    }
+    public I getBean(String key) {
+        return map.get(key);
+    }
+}
+
+I i = c.getBean("a");     // 몇 번을 꺼내도 같은 객체 (싱글턴)
+i.execute();
+```
+
+#### 정리
+
+| | 저장 | 주로 쓰는 곳 |
+|---|---|---|
+| ArrayList | 순서대로 | 데이터베이스 결과를 화면으로 보낼 때 |
+| HashSet | 중복 없이 | 접속자 정보 |
+| HashMap | 키-값 | 클래스 관리, 쿠키, SQL 관리 |
+
+`Collections`(Collection 제어: sort 등)와 `Arrays`(배열 제어: sort, asList 등)는 도구 클래스다.
+
+</details>
 </details>
