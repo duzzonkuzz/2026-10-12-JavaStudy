@@ -2742,4 +2742,180 @@ String s = dt.format(ff);                                           // 날짜 �
 패턴 기호는 SimpleDateFormat과 같다. (36번: MM 월 / mm 분, HH 24시간 / hh 12시간)
 
 </details>
+<details>
+<summary>42. 컬렉션, ArrayList (11.12)</summary>
+
+#### 컬렉션
+
+데이터를 담는 상자들의 모음 (java.util). 배열의 단점을 보완한다.
+
+- 크기가 자유롭다 (가변)
+- 정렬, 검색 기능을 제공한다
+- 모든 개발자가 같은 방식으로 쓴다 (표준화)
+
+```
+Collection (인터페이스)
+ ├ List  → ArrayList, Vector, LinkedList
+ └ Set   → HashSet, TreeSet
+
+Map (인터페이스, Collection과 별개) → HashMap, Hashtable
+```
+
+| | 순서 | 중복 | 주로 쓰는 클래스 |
+|---|---|---|---|
+| List | O (자동 index) | 허용 | ArrayList |
+| Set | X | 불가 | HashSet |
+| Map | X | 키는 불가, 값은 허용 | HashMap |
+
+| 클래스 | 특징 | 쓰임 |
+|---|---|---|
+| ArrayList | 동기화 X, 읽기 빠름, 중간 추가/삭제 느림 | 데이터베이스 (웹에서 가장 많이 씀) |
+| Vector | 동기화 O (ArrayList의 옛 버전) | 네트워크 접속자 |
+| LinkedList | 중간 추가/삭제 빠름 | 추가/삭제가 잦을 때 |
+| HashSet | 중복 제거 | 오라클 DISTINCT 같은 용도 (장르, 부서명) |
+| HashMap | 키-값 저장 (Hashtable은 동기화 버전) | 스프링, MyBatis, 요청/세션/쿠키 |
+
+#### ArrayList 주요 메소드
+
+```java
+ArrayList<String> list = new ArrayList<String>();
+list.add("홍길동");           // 추가 (끝에)
+list.add(1, "을지문덕");      // 지정한 위치에 추가 (뒤 데이터가 밀려서 느리다)
+list.get(0);                  // 읽기
+list.set(0, "춘향이");        // 수정
+list.remove(0);               // 삭제 (뒤 데이터가 앞으로 당겨진다)
+list.size();                  // 개수 (배열의 length)
+list.clear();                 // 전체 삭제
+list.isEmpty();               // 비어 있는지 (장바구니, 검색 결과)
+```
+
+#### 정렬, 부분 복사, 집합 연산
+
+```java
+Collections.sort(list);                                   // 오름차순 정렬
+ArrayList list2 = new ArrayList(list.subList(1, 4));      // index 1~3 복사 (end는 포함 안 함)
+```
+
+| 오라클 | ArrayList | a = [1,2,3,4,5], b = [1,2,6,7,8] |
+|---|---|---|
+| UNION ALL | `a.addAll(b)` | [1,2,3,4,5,1,2,6,7,8] |
+| INTERSECT | `a.retainAll(b)` | [1,2] |
+| MINUS | `a.removeAll(b)` | [3,4,5] |
+| UNION | Set에 addAll (중복 제거) | [1,2,3,4,5,6,7,8] |
+
+`containsAll(b)`는 b를 전부 포함하는지 true / false로 알려주는 메소드다.
+
+</details>
+
+<details>
+<summary>43. 제네릭 (11.12)</summary>
+
+#### 왜 쓰나
+
+```java
+ArrayList list = new ArrayList();             // 전부 Object로 저장
+list.add("홍길동");
+list.add(10);                                 // 아무 데이터나 들어간다
+String name = (String) list.get(0);           // 꺼낼 때마다 형변환 → 잘못하면 ClassCastException
+
+ArrayList<String> names = new ArrayList<String>();  // String만 저장
+String name2 = names.get(0);                        // 형변환 필요 없음
+names.add(10);                                      // 컴파일 에러로 바로 알려준다
+```
+
+- 데이터형을 하나로 고정해서 안전하다 (실행 전에 에러를 잡는다)
+- 형변환이 없어서 코드가 간결하고 읽기 쉽다
+- 제네릭 없이 쓰면 이클립스가 경고를 띄운다
+- `< >` 안에는 클래스만 들어간다. `<int>` X → `<Integer>`
+
+#### 제네릭 클래스 만들기
+
+```java
+class Box<T> {          // T는 사용할 때 정해진다
+    T t;
+    public void setT(T t) { this.t = t; }
+    public T getT() { return t; }
+}
+
+Box<String> box1 = new Box<String>();     // T = String
+Box<Integer> box2 = new Box<Integer>();   // T = Integer
+Box box3 = new Box();                     // T = Object
+```
+
+관례로 쓰는 이름: T(Type), E(Element), K(Key), V(Value)
+
+#### 제한, 와일드카드
+
+```java
+class Box<T extends Number> { }   // Number의 자식만 가능: Box<Integer> O, Box<String> X
+
+Class<?> cls;                     // ? : 어떤 타입이든 (타입을 모를 때)
+List<? extends Number> list;      // Number 자식들만, 꺼내기(읽기) 전용
+```
+
+라이브러리에서 가끔 보이는 정도라 읽을 줄만 알면 된다.
+
+</details>
+
+<details>
+<summary>44. 음악 차트 프로그램 (2) ArrayList + 추상 클래스 (11.12)</summary>
+
+26번(배열 + 일반 상속)을 ArrayList와 추상 클래스로 바꾼 버전
+
+| 클래스 | 역할 |
+|---|---|
+| Music | 노래 1개의 데이터 (@Data) |
+| MusicSystem | 추상 클래스. 공통 데이터(mList)와 기능(목록, 상세, 검색) + 추상 메소드 dataCollection() |
+| GenieMusic, MelonMusic | dataCollection()만 오버라이딩해서 각 사이트를 크롤링 |
+| UserMain | 사이트 선택, 메뉴 |
+
+```java
+public abstract class MusicSystem {
+    @Getter
+    private static ArrayList<Music> mList = new ArrayList<Music>();   // 크기를 정할 필요 없음
+
+    public abstract void dataCollection();           // 사이트마다 다른 부분 → 자식이 구현
+
+    public ArrayList<Music> musicAllData() { return mList; }                   // 전체 목록
+    public Music musicDetailData(int mno) { return mList.get(mno - 1); }       // 상세
+    public ArrayList<Music> musicFindData(String type, String fd) { ... }      // 검색 (맞는 것만 add)
+}
+
+public class GenieMusic extends MusicSystem {
+    @Override
+    public void dataCollection() {
+        // 크롤링 → Music 객체를 만들어서 getMList().add(music)
+    }
+}
+
+MusicSystem ms = (select == 1) ? new GenieMusic() : new MelonMusic();
+ms.dataCollection();
+```
+
+- 인터페이스는 상수만 가질 수 있어서, 공통 변수(mList)와 구현된 공통 메소드가 있으면 추상 클래스를 쓴다.
+- 배열 버전은 검색 결과 개수를 먼저 세야 했는데(23번), ArrayList는 맞는 것만 바로 add하면 된다.
+
+#### 페이지 나누기
+
+```java
+final int ROWSIZE = 10;
+int start = (page - 1) * ROWSIZE;
+int end = Math.min(page * ROWSIZE, mList.size());          // 마지막 페이지에서 범위를 넘지 않게
+ArrayList<Music> list = new ArrayList<Music>(mList.subList(start, end));
+```
+
+#### 유튜브 영상 키 찾기
+
+```java
+String url = "https://www.youtube.com/results?search_query=" + URLEncoder.encode(title, "UTF-8");
+// URL에 한글을 넣을 때는 인코딩: 리센느 → %EB%A6%AC%EC%84%BC%EB%8A%90
+
+Document doc = Jsoup.connect(url).get();
+Matcher m = Pattern.compile("/watch\\?v=([A-Za-z0-9_-]{11})").matcher(doc.toString());
+if (m.find()) {
+    key = m.group(1);      // 영상 키 (유튜브 키는 11글자)
+}
+```
+
+</details>
 </details>
