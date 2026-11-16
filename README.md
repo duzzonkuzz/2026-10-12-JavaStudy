@@ -2918,4 +2918,155 @@ if (m.find()) {
 ```
 
 </details>
+<details>
+<summary>45. List 구현 클래스, Set, Map 정리 (11.13)</summary>
+
+#### ArrayList vs Vector vs LinkedList
+
+| | ArrayList | Vector | LinkedList |
+|---|---|---|---|
+| 구조 | 배열 | 배열 | 연결 리스트 (1-2-3) |
+| 순서, 중복 | O | O | O |
+| 조회 (index) | 빠름 | 빠름 | 느림 |
+| 중간 추가, 삭제 | 느림 | 느림 | 빠름 |
+| 동기화 | X | O | X |
+| 쓰임 | 게시물, 회원, 상품 목록 (가장 많이 씀) | 예전 프로그램 유지보수 | Queue, 중간 추가/삭제가 잦을 때 |
+
+- ArrayList, Vector는 중간에 넣거나 빼면 뒤의 index를 전부 밀거나 당겨야 해서 느리다.
+- LinkedList는 앞뒤 연결만 바꾸면 돼서 빠르지만, index로 찾을 때는 처음부터 따라가야 해서 느리다. 연결 정보까지 저장해서 메모리도 더 쓴다.
+
+#### Vector 전용 메소드 이름
+
+| ArrayList | Vector (옛날 이름) |
+|---|---|
+| `add()` | `addElement()` |
+| `set(i, 값)` | `setElementAt(값, i)` |
+| `remove(i)` | `removeElementAt(i)` |
+| `get(i)` | `elementAt(i)` |
+| `clear()` | `removeAllElements()` |
+
+Vector도 add, get 같은 List 메소드를 그대로 쓸 수 있다. 왼쪽 메소드들도 동기화돼 있다.
+
+#### Arrays.asList
+
+```java
+String[] names = {"홍길동", "이순신", "박문수"};
+List<String> list = Arrays.asList(names);                     // 배열 → List (크기 고정)
+list.add("심청이");                                            // X UnsupportedOperationException
+
+List<String> list2 = new ArrayList<String>(Arrays.asList(names));   // 추가, 삭제까지 하려면
+```
+
+#### Set, Map
+
+| | Set | Map |
+|---|---|---|
+| 저장 | 값 | 키 + 값 |
+| 순서 | X (index 없음) | X |
+| 중복 | 불가 | 키는 불가 (같은 키로 넣으면 덮어씀), 값은 허용 |
+| 클래스 | HashSet, TreeSet(정렬) | HashMap, Hashtable, Properties(환경 설정 파일) |
+| 쓰임 | List에서 중복 제거 | 스프링 클래스 관리, MyBatis SQL 관리, 요청값/결과값 전송 |
+
+Set은 index가 없어서 get(), set()이 없다. 꺼낼 때는 for-each로 읽는다.
+
+#### Queue, Stack
+
+- Queue: 먼저 넣은 게 먼저 나온다 (FIFO). 네트워크, 운영체제 작업 대기열
+- Stack: 나중에 넣은 게 먼저 나온다 (LIFO). 메소드 호출 구조
+
+#### 예제: 지니 vs 멜론 차트 비교
+
+```java
+ArrayList<String> genie = a.genieData();    // 지니 노래 제목
+ArrayList<String> melon = a.melonData();    // 멜론 노래 제목
+
+ArrayList<String> onlyGenie = new ArrayList<String>(genie);
+onlyGenie.removeAll(melon);                 // 지니에만 있는 곡 (MINUS)
+
+ArrayList<String> both = new ArrayList<String>(genie);
+both.retainAll(melon);                      // 두 곳에 다 있는 곡 (INTERSECT)
+
+ArrayList<String> all = new ArrayList<String>(genie);
+all.addAll(melon);                          // 합치기 (UNION ALL)
+```
+
+`new ArrayList<>(원본)`으로 복사해서 쓰면 원본이 그대로 남아서 다시 크롤링할 필요가 없다.
+
+</details>
+
+<details>
+<summary>46. 도서 관리 프로그램 - ArrayList 활용 (11.13)</summary>
+
+#### BookVO (오라클 테이블과 같은 구조)
+
+```java
+@Data
+public class BookVO {
+    private int no;          // NUMBER
+    private String title;    // VARCHAR2
+    private String poster;
+    private String author;
+    private Date pubdate;    // DATE → java.util.Date
+    private String pages;
+    private int price;
+}
+```
+
+#### BookSystem 기능과 사용한 메소드
+
+| 기능 | 메소드 | ArrayList |
+|---|---|---|
+| 목록 (페이지) | `bookListData(page)` | subList |
+| 상세보기 | `bookDetailData(no)` | get |
+| 검색 | `bookFindData(fd)` | for-each + contains → add |
+| 삭제 | `bookDelete(no)` | remove |
+| 수정 | | set |
+
+전체 데이터는 static `bList`에 저장해두고, BookSystem 객체를 처음 만들 때 static 블록이 실행돼서 데이터를 채운다.
+
+#### 윈도우 화면 (BookMain)
+
+```java
+public class BookMain extends JFrame implements ActionListener, MouseListener {
+    int curpage = 1;     // 현재 페이지
+    int totalpage = 0;   // 총 페이지
+
+    public void bookPrint() {
+        for (int i = model.getRowCount() - 1; i >= 0; i--) {
+            model.removeRow(i);        // 테이블 비우기 (뒤에서부터 지운다)
+        }
+        totalpage = (int) Math.ceil(BookSystem.getBList().size() / 10.0);
+        for (BookVO vo : bs.bookListData(curpage)) {
+            model.addRow(new String[]{ String.valueOf(vo.getNo()), vo.getTitle(), ... });
+        }
+        la2.setText(curpage + " page / " + totalpage + " pages");
+    }
+
+    public void actionPerformed(ActionEvent e) {          // 버튼 클릭
+        if (e.getSource() == b2 && curpage > 1) {         // 이전
+            curpage--;
+            bookPrint();
+        } else if (e.getSource() == b3 && curpage < totalpage) {   // 다음
+            curpage++;
+            bookPrint();
+        }
+    }
+
+    public void mouseClicked(MouseEvent e) {              // 테이블 더블 클릭 → 상세
+        if (e.getClickCount() == 2) {
+            int row = table.getSelectedRow();
+            String no = model.getValueAt(row, 0).toString();
+            BookVO vo = bs.bookDetailData(Integer.parseInt(no));
+            JOptionPane.showMessageDialog(this, "책제목:" + vo.getTitle() + ...);
+        }
+    }
+}
+```
+
+- `implements ActionListener, MouseListener`: 인터페이스 여러 개 구현. 버튼은 ActionListener, 마우스는 MouseListener
+- MouseListener는 쓰지 않는 메소드(mousePressed 등)도 전부 오버라이딩해야 한다. (인터페이스라서)
+- `DecimalFormat("###,###")`로 가격에 쉼표 (36번)
+- 검색 결과를 보여줄 때는 페이지 버튼 패널을 숨긴다. (`p.setVisible(false)`)
+
+</details>
 </details>
