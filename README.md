@@ -3234,4 +3234,138 @@ i.execute();
 `Collections`(Collection 제어: sort 등)와 `Arrays`(배열 제어: sort, asList 등)는 도구 클래스다.
 
 </details>
+<details>
+<summary>50. 쓰레드 Thread (11.17)</summary>
+
+하나의 프로그램 안에서 여러 작업을 동시에 하기 위한 작은 실행 단위
+
+- 장점: 여러 작업 동시 처리, CPU 활용도 증가, 대기 시간 감소
+- 단점: 코드가 복잡하다, 같은 데이터를 동시에 건드리면 충돌 → 동기화가 필요하고, 동기화하면 느려진다
+- 쓰임: 크롤링 나눠서 수집, 네트워크 서버, 게임
+
+#### 만드는 방법
+
+```java
+class MyThread extends Thread {           // 1) Thread 상속
+    public void run() { }
+}
+
+class MyTask implements Runnable {        // 2) Runnable 구현 (권장: 다른 클래스를 상속할 수 있어서)
+    public void run() { }
+}
+
+Runnable r = new Runnable() {             // 3) 익명 클래스
+    public void run() { }
+};
+
+Runnable r2 = () -> { };                  // 4) 람다
+
+new Thread(r).start();
+```
+
+`run()`을 직접 부르면 새 쓰레드가 생기지 않고 main 쓰레드에서 그냥 실행된다. 반드시 `start()`로 시작한다.
+
+#### 주요 메소드
+
+| 메소드 | 기능 |
+|---|---|
+| `start()` | 새 쓰레드를 만들고 run() 실행 |
+| `run()` | 실제 작업 내용 |
+| `sleep(ms)` | 지정한 시간만큼 대기 |
+| `join()` | 그 쓰레드가 끝날 때까지 기다리기 |
+| `interrupt()` | 중단 요청 (sleep 중이면 InterruptedException으로 깨운다) |
+| `currentThread()` | 지금 실행 중인 쓰레드 |
+| `isAlive()` | 아직 실행 중인지 |
+
+interrupt()는 쓰레드를 바로 끝내는 게 아니라 "멈춰 달라"는 신호다. 쓰레드 안에서 그 신호를 확인하고 끝내야 멈춘다.
+
+#### 예제: 지니 차트 4페이지를 쓰레드 4개로 동시에 수집
+
+```java
+List<Music> list = new ArrayList<Music>();
+Thread[] threads = new Thread[4];
+
+for (int i = 0; i < 4; i++) {
+    final int page = i + 1;               // 익명 클래스 안에서 쓰려면 final
+    threads[i] = new Thread(new Runnable() {
+        public void run() {
+            List<Music> temp = new ArrayList<Music>();
+            // page 크롤링 → temp에 add
+            synchronized (list) {          // 한 번에 한 쓰레드만 list에 추가 (동기화)
+                list.addAll(temp);
+            }
+        }
+    });
+}
+
+for (Thread t : threads) t.start();      // 4개 동시에 시작
+for (Thread t : threads) t.join();       // 4개가 다 끝날 때까지 대기
+
+list.sort(Comparator.comparingInt(Music::getMno));   // 끝난 순서대로 들어가서 순위순 정렬
+```
+
+- ArrayList는 동기화가 안 돼서, 여러 쓰레드가 동시에 add하면 데이터가 꼬일 수 있다. 그래서 `synchronized`
+- 순서대로 1페이지씩 수집하는 것보다 걸린 시간이 줄어든다. (System.currentTimeMillis()로 비교)
+- 웹 서버(톰캣, 스프링)는 요청마다 쓰레드를 알아서 관리해서 웹 개발에서 직접 Thread를 만들 일은 거의 없다.
+
+</details>
+
+<details>
+<summary>51. ThreadPool, Comparator 정렬 (11.17)</summary>
+
+#### ThreadPool
+
+쓰레드를 미리 만들어 두고 작업이 생기면 재사용한다.
+
+- 장점: 쓰레드 생성 비용 감소, 메모리 절약, 풀이 알아서 관리
+- 단점: 풀 크기를 정해야 한다, 작업이 많으면 대기, 잘못 설정하면 성능 저하
+
+```java
+ExecutorService service = Executors.newFixedThreadPool(4);    // 쓰레드 4개짜리 풀
+List<Future<List<Music>>> futures = new ArrayList<>();
+
+for (int i = 1; i <= 4; i++) {
+    final int page = i;
+    Future<List<Music>> future = service.submit(new Callable<List<Music>>() {
+        public List<Music> call() throws Exception {   // Runnable의 run() 대신 call(): 결과를 리턴
+            List<Music> temp = new ArrayList<Music>();
+            // page 크롤링 → temp에 add
+            return temp;
+        }
+    });
+    futures.add(future);
+}
+
+for (Future<List<Music>> f : futures) {
+    list.addAll(f.get());       // 작업이 끝날 때까지 기다렸다가 결과 받기 (join 역할)
+}
+service.shutdown();             // 풀 종료
+```
+
+- `get()`을 등록한 순서대로 부르기 때문에 결과도 1~4페이지 순서대로 쌓인다. → 정렬, synchronized가 필요 없다
+- `execute()`: 작업 실행만 (결과 없음) / `submit()`: 작업 실행 + 결과를 Future로 받기
+
+| | Thread | ThreadPool |
+|---|---|---|
+| 생성 | `new Thread()` 직접 | 풀이 관리 |
+| 시작 | `start()` | `submit()` / `execute()` |
+| 결과 받기 | 직접 구현 | `Future.get()` |
+| 종료 대기 | `join()` | `Future.get()` |
+| 종료 | `interrupt()` | `shutdown()` |
+| 재사용 | X | O |
+| 작업 | Runnable (리턴 없음) | Callable (리턴 있음) |
+
+#### Comparator 정렬
+
+```java
+list.sort(Comparator.comparingInt(MusicVO::getMno));              // 번호 오름차순
+list.sort(Comparator.comparing(MusicVO::getTitle));               // 제목 가나다순
+list.sort(Comparator.comparingInt(MusicVO::getMno).reversed());   // 번호 내림차순
+```
+
+- `MusicVO::getMno`: 메소드 참조. "MusicVO의 getMno() 값으로 비교하라"는 뜻
+- 숫자(int)는 `comparingInt`, 문자열은 `comparing`
+- 리스트를 바로 출력하면 toString()이 호출된다. (33번) 출력 모양을 정하려면 VO에서 toString()을 오버라이딩
+
+</details>
 </details>
