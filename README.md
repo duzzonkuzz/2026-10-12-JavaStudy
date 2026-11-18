@@ -3368,4 +3368,177 @@ list.sort(Comparator.comparingInt(MusicVO::getMno).reversed());   // 번호 내�
 - 리스트를 바로 출력하면 toString()이 호출된다. (33번) 출력 모양을 정하려면 VO에서 toString()을 오버라이딩
 
 </details>
+<details>
+<summary>52. 입출력(IO) - 스트림, File (11.18)</summary>
+
+#### 스트림
+
+데이터가 이동하는 통로. 한쪽 방향으로만 흐른다(단방향). 그래서 읽기용, 쓰기용을 따로 만든다.
+
+| | 바이트 스트림 (1byte) | 문자 스트림 (2byte, char) |
+|---|---|---|
+| 부모 | InputStream / OutputStream | Reader / Writer |
+| 파일 | FileInputStream / FileOutputStream | FileReader / FileWriter |
+| 쓰임 | 이미지, PDF, zip / 파일 복사, 업로드, 다운로드 | 한글이 있는 txt, csv 읽기/쓰기 |
+| 보조 (빠르게) | BufferedInputStream / BufferedOutputStream | BufferedReader / BufferedWriter |
+
+- InputStreamReader: 바이트 스트림 → 문자 스트림으로 변환 (한글 깨짐 방지)
+- ObjectInputStream / ObjectOutputStream: 객체 단위로 저장
+- PrintWriter: 브라우저로 JSON 보낼 때
+- java.io는 Checked 예외라 반드시 예외처리 (30번)
+
+| 입출력 대상 | 예 |
+|---|---|
+| 메모리 | `System.in`, `System.out`, Scanner, BufferedReader |
+| 파일 | 읽기, 쓰기, 복사 |
+| 네트워크 | Socket, 웹(URL) |
+
+#### File: 파일, 폴더 정보
+
+```java
+File file = new File("C:\\javaDev\\a.jpg");   // 파일
+File dir = new File("C:\\javaDev");           // 폴더도 같은 File 클래스
+```
+
+| 메소드 | 기능 |
+|---|---|
+| `getName()` | 파일 이름 |
+| `getPath()` | 경로 + 파일 이름 |
+| `getParent()` | 경로만 |
+| `length()` | 파일 크기 (long, byte) |
+| `lastModified()` | 최종 수정일 (long → `new Date(값)`) |
+| `isFile()` / `isDirectory()` | 파일인지 / 폴더인지 |
+| `isHidden()` / `canRead()` / `canWrite()` | 숨김 파일인지 / 읽을 수 있는지 / 쓸 수 있는지 |
+| `exists()` | 있는지 |
+| `listFiles()` | 폴더 안의 파일, 폴더 전부 (File[]) |
+| `mkdir()` / `mkdirs()` | 폴더 생성 / 중간 폴더까지 한 번에 생성 |
+| `createNewFile()` | 빈 파일 생성 |
+| `delete()` | 삭제 |
+
+```java
+File dir = new File("c:\\upload");
+if (!dir.exists()) {
+    dir.mkdir();
+}
+
+for (File f : dir.listFiles()) {     // 폴더 안 파일 목록
+    if (f.isFile()) System.out.println(f.getName() + " " + f.length() + "Bytes");
+    if (f.isDirectory()) System.out.println(f.getName() + " DIR");
+}
+```
+
+- `mkdir()`은 상위 폴더가 없으면 실패한다. `c:\upload\data\data1`처럼 여러 단계는 `mkdirs()`
+- 폴더는 비어 있어야 `delete()`가 된다. 그래서 안의 파일을 먼저 지우고 폴더를 지운다.
+- 없는 폴더에 `listFiles()`를 하면 null이 돌아와서 for-each에서 NullPointerException
+- File은 파일 정보, Files(java.nio)는 복사, 이동 같은 파일 작업용
+
+#### 파일 형식
+
+| 형식 | 쓰임 |
+|---|---|
+| xml | 설정 파일 (Spring, MyBatis) |
+| json | 자바스크립트와 데이터 주고받기 |
+| yml, properties | 스프링부트 설정 파일 |
+| txt, csv | 일반 데이터 |
+
+파일은 데이터 노출, 깨짐, 삭제 위험이 있고 구분자가 없어서, 실제 데이터는 오라클(컬럼으로 구분)에 저장한다.
+
+</details>
+
+<details>
+<summary>53. 파일 읽기/쓰기, BufferedReader (11.18)</summary>
+
+#### 바이트 단위 쓰기, 읽기
+
+```java
+FileOutputStream fos = new FileOutputStream("c:\\java_data\\sawon.txt", true);   // true: 이어서 쓰기
+fos.write("1|홍길동|개발부|대리|4000\n".getBytes());     // 문자열 → byte[]
+fos.close();
+
+FileInputStream fis = new FileInputStream("c:\\java_data\\sawon.txt");
+byte[] buffer = fis.readAllBytes();                      // 전부 읽기
+fis.close();
+```
+
+`true`가 없으면 덮어쓰고, 있으면 기존 내용 뒤에 이어서 쓴다.
+
+한글은 1byte가 아니라 여러 byte(UTF-8에서 3byte)라서, 바이트 스트림으로 한 byte씩 읽어서 `(char)`로 바꾸면 깨진다. 한글 텍스트는 문자 스트림으로 읽는다.
+
+#### 파일 복사 (바이트 스트림)
+
+```java
+FileInputStream fis = new FileInputStream("C:\\javaDev\\lombok.jar");
+FileOutputStream fos = new FileOutputStream("C:\\java_data\\lombok.jar");
+
+byte[] buffer = new byte[1024];
+int i = 0;
+while ((i = fis.read(buffer, 0, 1024)) != -1) {   // 1024byte씩 모아서 읽기, i = 실제 읽은 byte 수
+    fos.write(buffer, 0, i);                       // 읽은 만큼만 쓰기
+}
+fis.close();
+fos.close();
+```
+
+한 byte씩 읽고 쓰는 것보다 훨씬 빠르다. 업로드, 다운로드가 이 방식이다.
+
+#### 문자 단위: FileReader / FileWriter
+
+```java
+FileWriter fw = new FileWriter(file, true);      // true: 이어서 쓰기
+fw.write("1|노래|가수\r\n");                       // 문자열을 그대로 쓴다
+fw.close();
+
+FileReader fr = new FileReader(file);
+int i;
+while ((i = fr.read()) != -1) {                  // 한 글자씩 (한글 OK)
+    System.out.print((char) i);
+}
+fr.close();
+```
+
+#### BufferedReader: 한 줄씩 빠르게
+
+```java
+BufferedReader br = new BufferedReader(new InputStreamReader(System.in));                     // 키보드
+BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(path)));    // 파일
+BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));        // 웹
+BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));      // 네트워크
+
+while (true) {
+    String line = br.readLine();     // 한 줄씩 String으로, 끝이면 null
+    if (line == null) break;
+    System.out.println(line);
+}
+br.close();
+```
+
+- 데이터를 임시 공간(버퍼)에 모아서 한 번에 처리해서, 한 글자씩 읽는 FileReader보다 빠르다.
+- 연결 대상만 바꾸면 키보드, 파일, 웹, 네트워크를 같은 방식으로 읽는다. 웹에서 가장 많이 쓰는 입출력
+- 파일은 `new BufferedReader(new FileReader(path))`도 된다. InputStreamReader를 쓰면 `new InputStreamReader(스트림, "UTF-8")`처럼 인코딩을 지정할 수 있다.
+- `readLine()`은 줄 끝의 `\r\n`을 빼고 돌려준다. `split("\n")`으로 나누면 줄 끝에 `\r`이 남는다.
+
+#### 예제: 크롤링 데이터를 파일에 저장하고 다시 읽기
+
+```java
+// 저장 (51번 ThreadPool로 수집한 list)
+FileWriter fw = new FileWriter("c:\\java_data\\genie.txt", true);
+for (Music m : list) {
+    fw.write(m.getMno() + "|" + m.getTitle() + "|" + m.getSinger() + "|"
+             + m.getAlbum() + "|" + m.getPoster() + "\r\n");
+}
+fw.close();
+
+// 읽기
+BufferedReader br = new BufferedReader(new FileReader("c:\\java_data\\genie.txt"));
+String line;
+while ((line = br.readLine()) != null) {
+    String[] music = line.split("\\|");
+    System.out.println("번호:" + music[0] + " 곡:" + music[1] + " 가수:" + music[2]);
+}
+br.close();
+```
+
+이어서 쓰기(true)로 열어서, 프로그램을 다시 실행하면 같은 데이터가 또 뒤에 붙는다.
+
+</details>
 </details>
