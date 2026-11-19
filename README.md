@@ -3541,4 +3541,122 @@ br.close();
 이어서 쓰기(true)로 열어서, 프로그램을 다시 실행하면 같은 데이터가 또 뒤에 붙는다.
 
 </details>
+<details>
+<summary>54. Buffered 스트림, 웹 데이터 읽기 (11.19)</summary>
+
+#### 웹에서 쓰는 입출력 클래스
+
+| 클래스 | 단위 | 주요 메소드 | 쓰임 |
+|---|---|---|---|
+| BufferedReader | 문자 | `readLine()`, `close()` | txt, 로그 파일, 웹 데이터 읽기 (가장 많이 씀) |
+| BufferedWriter | 문자 | `write()`, `newLine()`, `close()` | 메모장, 로그, 게시물 저장 |
+| BufferedInputStream | 바이트 | `read()`, `read(byte[])`, `close()` | 이미지, 음악, 동영상 읽기 / 업로드 |
+| BufferedOutputStream | 바이트 | `write()`, `close()` | 이미지 복사, 다운로드 |
+| ObjectInputStream / ObjectOutputStream | 객체 | `readObject()` / `writeObject()` | 객체 통째로 읽기 / 저장 (55번) |
+| File / Files | | | 파일 정보 / 파일 생성, 복사, 삭제 (52번) |
+
+Buffered는 보조 스트림이라 혼자 못 쓰고, 기본 스트림을 넣어서 만든다.
+
+```java
+BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
+bw.write("Hello Oracle!!");
+bw.newLine();                // 줄바꿈 (안 하면 다음 실행 때 같은 줄에 이어 붙는다)
+bw.close();                  // 안에 넣은 FileWriter까지 같이 닫힌다
+
+BufferedInputStream bis = new BufferedInputStream(new FileInputStream("c:\\javaDev\\shoes.csv"));
+BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream("c:\\java_data\\shoes.csv"));
+byte[] buffer = new byte[1024];
+int i;
+while ((i = bis.read(buffer, 0, 1024)) != -1) {
+    bos.write(buffer, 0, i);
+}
+bis.close();
+bos.close();
+```
+
+안쪽 스트림(FileWriter)을 먼저 close하면, 바깥 Buffered로 쓸 때 "Stream closed" 에러가 난다. 닫는 건 바깥 것 하나만 하면 된다.
+
+#### 예제: 영화진흥위원회 박스오피스 데이터 읽기
+
+```java
+String baseUrl = "https://www.kobis.or.kr/kobis/business/main/";
+String[] strUrl = { "", "searchMainDailyBoxOffice.do", "searchMainRealTicket.do", "searchMainDailySeatTicket.do" };
+                  // 메뉴 번호(1~3)를 그대로 index로 쓰려고 0번은 비워둠
+
+URL url = new URI(baseUrl + strUrl[menu]).toURL();
+HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+StringBuilder sb = new StringBuilder();
+String line;
+while ((line = br.readLine()) != null) {
+    sb.append(line).append("\n");
+}
+br.close();
+System.out.println(sb.toString().trim());    // JSON 데이터
+```
+
+날씨, 실시간 검색어처럼 실시간 데이터를 가져올 때 쓰는 방식이다. 결과는 JSON(키:값) 형태로 온다.
+
+</details>
+
+<details>
+<summary>55. 객체 직렬화 ObjectOutputStream (11.19)</summary>
+
+#### 직렬화
+
+객체를 byte 흐름으로 바꿔서 파일이나 네트워크로 보낼 수 있게 하는 것. 다시 객체로 되돌리는 건 역직렬화
+
+```java
+class Music implements Serializable {    // 직렬화 허용 표시 (구현할 메소드 없음)
+    private int mno;
+    private String title;
+    ...
+}
+```
+
+- Serializable을 구현하지 않은 객체를 저장하면 NotSerializableException
+- 리스트를 저장할 때는 리스트 안에 든 객체(Music)도 Serializable이어야 한다.
+
+#### 저장, 읽기
+
+```java
+// 저장 (Output = 쓰기)
+ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("c:\\java_data\\music.dat"));
+oos.writeObject(list);         // ArrayList<Music>를 통째로 저장
+oos.close();
+
+// 읽기 (Input = 읽기)
+ObjectInputStream ois = new ObjectInputStream(new FileInputStream("c:\\java_data\\music.dat"));
+ArrayList<Music> list = (ArrayList<Music>) ois.readObject();   // Object로 나와서 형변환
+ois.close();
+```
+
+- 텍스트 파일처럼 `|`로 나누고 parseInt할 필요 없이 객체 그대로 저장하고 꺼낸다.
+- 저장된 파일은 byte 데이터라 메모장으로 열면 깨져 보인다. (확장자를 .txt로 해도 텍스트가 아니다)
+
+#### 예제: 텍스트 파일 → 객체 리스트 → 객체 파일
+
+```java
+ArrayList<Music> list = new ArrayList<Music>();
+BufferedReader br = new BufferedReader(new FileReader("c:\\java_data\\genie.txt"));
+String line;
+while ((line = br.readLine()) != null) {
+    String[] s = line.split("\\|");
+    Music mu = new Music();
+    mu.setMno(Integer.parseInt(s[0]));
+    mu.setTitle(s[1]);
+    mu.setSinger(s[2]);
+    mu.setAlbum(s[3]);
+    mu.setPoster(s[4]);
+    list.add(mu);
+}
+br.close();
+
+ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("c:\\java_data\\music.dat"));
+oos.writeObject(list);
+oos.close();
+```
+
+</details>
 </details>
