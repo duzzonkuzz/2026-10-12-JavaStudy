@@ -3660,3 +3660,173 @@ oos.close();
 
 </details>
 </details>
+<details>
+<summary><b>Oracle</b></summary>
+
+<details>
+<summary>01. 관계 데이터 모델, 관계 대수 (11.24)</summary>
+
+#### 용어
+
+| 데이터베이스 | 일반 용어 | 자바로 치면 |
+|---|---|---|
+| 릴레이션 | 테이블 | 클래스 |
+| 속성 (attribute) | 컬럼 (열) | 인스턴스 변수 |
+| 튜플 | 행 (row, 레코드) | 객체 |
+| 도메인 | 속성이 가질 수 있는 값의 범위, 데이터형 | 데이터형 |
+
+- 스키마: 테이블 구조 (설계도, 잘 안 바뀐다) → `Member(id, name, sex)`
+- 인스턴스: 실제로 저장된 데이터 (계속 바뀐다) → `aaa, 홍길동, 남자`
+- 오라클은 행(ROW) 단위로 데이터를 다룬다.
+
+#### 테이블(릴레이션)의 특징
+
+- 데이터베이스 안에서 테이블 이름은 유일하다.
+- 한 테이블 안에서 속성(컬럼) 이름은 중복될 수 없다.
+- 같은 행(튜플)이 중복될 수 없다.
+- 한 칸에는 값이 하나만 들어간다. (`aaa,bbb`처럼 여러 값 X)
+- 행, 열의 순서는 의미가 없다.
+
+#### 관계 데이터 모델
+
+테이블끼리의 관계로 데이터를 관리한다.
+
+```
+학생 ──── 수강 ──── 과목
+고객 ──── 예약 ──── 영화
+고객 ──── 결제 ──── 쇼핑몰
+```
+
+#### 키
+
+| 키 | 뜻 | 예 (학생 테이블) |
+|---|---|---|
+| 슈퍼키 | 행을 유일하게 구분할 수 있는 속성 묶음 | 학번, 학번+이름 |
+| 후보키 | 슈퍼키 중 꼭 필요한 속성만 남은 것 (최소성) | 학번, 주민번호 |
+| 기본키 (PK) | 후보키 중 대표로 고른 키. 중복, NULL 불가 | 학번 |
+| 대체키 | 기본키가 안 된 나머지 후보키 | 주민번호, 이메일 |
+| 외래키 (FK) | 다른 테이블의 기본키를 참조하는 키 | 수강 테이블의 학번 |
+
+#### 무결성
+
+데이터가 정확하고 일관되게 유지되도록 잘못된 데이터가 못 들어가게 막는 규칙
+
+- 개체 무결성 (기본키): 기본키는 중복, NULL이 될 수 없다.
+- 참조 무결성 (외래키): 외래키 값은 참조하는 테이블에 실제로 있는 값이어야 한다.
+
+```
+학생: 학번 1, 2, 3
+수강: (101, 학번 1, Java) O
+      (104, 학번 4, HTML) X → 학생 테이블에 4번이 없어서 오류
+```
+
+#### 관계 대수
+
+테이블에서 원하는 데이터를 꺼내는 연산 방법
+
+| 연산 | 뜻 | SQL |
+|---|---|---|
+| 셀렉션 | 조건에 맞는 행 선택 | `WHERE deptno = 10` |
+| 프로젝션 | 필요한 열만 선택 | `SELECT empno, ename, sal` |
+| 합집합 | 두 결과 합치기 (중복 제거) | `UNION` |
+| 교집합 | 양쪽에 다 있는 것 | `INTERSECT` |
+| 차집합 | 한쪽에만 있는 것 | `MINUS` |
+| 조인 | 두 테이블을 연결해서 추출 | `JOIN` |
+
+```sql
+SELECT * FROM emp WHERE deptno = 10
+UNION
+SELECT * FROM emp WHERE deptno = 20;      -- ;는 맨 마지막에 한 번만
+```
+
+Java ArrayList의 addAll / retainAll / removeAll과 같은 개념 (42번)
+
+#### 조인 종류 (다음에 배울 것)
+
+- EQUI JOIN (같은 값으로 연결): NATURAL JOIN, JOIN USING
+- NON-EQUI JOIN (범위로 연결)
+- OUTER JOIN: LEFT, RIGHT, FULL
+- 오라클 전용 조인 문법 / ANSI 조인(모든 데이터베이스 표준)
+
+</details>
+
+<details>
+<summary>02. SQL 기초, SELECT (11.24)</summary>
+
+#### SQL 분류
+
+| 분류 | 뜻 | 명령어 |
+|---|---|---|
+| DQL | 검색 | SELECT |
+| DML | 데이터 조작 | INSERT, UPDATE, DELETE |
+| DDL | 테이블 생성, 수정, 삭제 | CREATE, ALTER, DROP |
+| DCL | 권한 | GRANT, REVOKE |
+| TCL | 저장 / 취소 | COMMIT, ROLLBACK, SAVEPOINT |
+
+SQL은 비절차적 언어다. 처리 순서를 적는 게 아니라 원하는 결과만 적으면 데이터베이스가 알아서 찾는다.
+
+#### SELECT 형식
+
+```sql
+SELECT * | 컬럼1, 컬럼2       -- 필수
+FROM 테이블명                -- 필수
+[WHERE 조건]
+[GROUP BY 컬럼]
+[HAVING 그룹 조건]
+[ORDER BY 컬럼 ASC|DESC];
+```
+
+실행 순서: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY
+
+SELECT가 WHERE보다 늦게 실행돼서, SELECT에서 만든 별칭은 WHERE에서는 못 쓰고 ORDER BY에서는 쓸 수 있다.
+
+#### 주의점
+
+- 키워드는 대소문자 구분이 없다. (보통 대문자로 쓴다) 저장된 데이터는 구분한다. (`KING` ≠ `king`)
+- 문자, 날짜는 작은따옴표 `' '`. 큰따옴표 `" "`는 별칭에 쓴다.
+- 문장 끝에 `;` (자바에서 SQL을 보낼 때는 `;`을 빼고 보낸다)
+- 날짜 기본 형식은 `YY/MM/DD`
+- 한 줄로 써도 되고 여러 줄로 나눠 써도 된다.
+
+#### 기본 문법
+
+```sql
+DESC emp;                                   -- 테이블 구조 (컬럼명, 데이터형) 확인
+
+SELECT * FROM emp;                          -- 전체
+SELECT empno, ename, sal FROM emp;          -- 원하는 컬럼만
+
+SELECT DISTINCT deptno FROM emp;            -- 중복 제거 (Java의 Set)
+
+SELECT empno "사번", ename AS 이름 FROM emp;  -- 별칭 (AS 생략 가능)
+
+SELECT ename || '의 연봉은 ' || sal || '입니다' FROM emp;   -- 문자열 결합은 ||
+
+SELECT * FROM emp WHERE empno = &사번;       -- 실행할 때 값을 입력받는다 (Scanner처럼)
+```
+
+#### ORDER BY 정렬
+
+```sql
+SELECT * FROM emp ORDER BY sal DESC;          -- 내림차순
+SELECT * FROM emp ORDER BY hiredate;          -- 오름차순 (ASC 생략 가능)
+SELECT * FROM emp ORDER BY 4;                 -- 4번째 컬럼으로 정렬
+SELECT * FROM emp ORDER BY deptno, sal DESC;  -- deptno 오름차순 → 같으면 sal 내림차순
+```
+
+`ASC` / `DESC`는 바로 앞 컬럼에만 적용된다. `ORDER BY 7, 2 DESC`는 7번 오름차순, 2번 내림차순
+
+</details>
+
+<details>
+<summary>03. WHERE 연산자 (11.24)</summary>
+
+```sql
+SELECT 컬럼 FROM 테이블 WHERE 컬럼 연산자 값;
+```
+
+#### 산술 연산자 + - * /
+
+```sql
+SELECT 10 + 3, 10 - 3, 10 * 3, 10 / 3 FROM DUAL;   -- 10/3 = 3.333... (정수/정수도 실수)
+SELECT sal * 12, sal + NVL(comm, 0) FROM emp;       --
