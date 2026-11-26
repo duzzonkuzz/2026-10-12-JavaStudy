@@ -3829,4 +3829,69 @@ SELECT 컬럼 FROM 테이블 WHERE 컬럼 연산자 값;
 
 ```sql
 SELECT 10 + 3, 10 - 3, 10 * 3, 10 / 3 FROM DUAL;   -- 10/3 = 3.333... (정수/정수도 실수)
-SELECT sal * 12, sal + NVL(comm, 0) FROM emp;       --
+SELECT sal * 12, sal + NVL(comm, 0) FROM emp;       -- 연봉, 총급여
+```
+
+- DUAL: 테이블 없이 계산 결과만 확인할 때 쓰는 오라클 기본 테이블
+- 나머지는 `%`가 아니라 `MOD(10, 3)`
+- `+`는 덧셈만. 문자열 결합은 `||`
+- NULL과 계산하면 결과도 NULL. `NVL(comm, 0)`으로 NULL을 0으로 바꿔서 계산한다.
+- `'10' - 3`처럼 문자열도 자동으로 숫자로 바뀌지만, 변환 시간이 들어서 `TO_NUMBER('10')`를 쓴다. (Java의 parseInt)
+
+#### 비교 연산자
+
+`=`, `<>`(같지 않다, 권장) / `!=` / `^=`, `<`, `>`, `<=`, `>=`
+
+숫자, 문자, 날짜 전부 비교할 수 있다.
+
+```sql
+SELECT * FROM emp WHERE sal >= 3400000;
+SELECT * FROM emp WHERE hiredate < '20/07/22';
+SELECT * FROM emp WHERE ename = '조하준';
+```
+
+#### 논리 연산자
+
+`AND`(둘 다 참), `OR`(하나라도 참), `NOT`(반대). `&&`, `||`, `!`는 쓰지 않는다.
+
+#### BETWEEN, IN, LIKE, IS NULL
+
+| 연산자 | 쓰임 | 예 |
+|---|---|---|
+| `BETWEEN A AND B` | 범위 (A, B 포함) | `sal BETWEEN 3000000 AND 4000000` |
+| `IN (값, 값)` | OR 여러 개를 짧게 | `deptno IN (10, 20, 30)` |
+| `LIKE` | 문자 패턴 검색 | 아래 표 |
+| `IS NULL` / `IS NOT NULL` | NULL 확인 (`= NULL`은 안 된다) | `comm IS NOT NULL` |
+| `NOT` | 반대 | `NOT IN`, `NOT LIKE`, `NOT BETWEEN` |
+
+| LIKE | 뜻 | Java |
+|---|---|---|
+| `'김%'` | 김으로 시작 | startsWith |
+| `'%김'` | 김으로 끝 | endsWith |
+| `'%김%'` | 김이 포함 | contains |
+| `'__김'` | `_` 하나 = 아무 글자 하나 | 정규식 `.` |
+
+여러 단어 검색은 `REGEXP_LIKE(name, 'A|B|C')` (Java 정규식과 같은 기호, 40번)
+
+#### 예제
+
+```sql
+-- 2020년 입사자
+SELECT * FROM emp WHERE hiredate >= '20/01/01' AND hiredate <= '20/12/31';
+SELECT * FROM emp WHERE hiredate BETWEEN '20/01/01' AND '20/12/31';
+
+-- 2025년 입사 + 직위가 사원
+SELECT * FROM emp WHERE hiredate LIKE '25%' AND job = '사원';
+
+-- 2020년 입사 + 성과급을 받는 사원
+SELECT * FROM emp WHERE hiredate LIKE '20%' AND comm IS NOT NULL;
+
+-- 2020년 입사 + 김씨
+SELECT * FROM emp WHERE hiredate LIKE '20%' AND ename LIKE '김%';
+```
+
+날짜를 `'20/01/01'` 같은 문자열로 비교하는 건 날짜 형식 설정(YY/MM/DD)에 맞춰 자동 변환되기 때문이다. 설정이 다른 환경에서는 `TO_DATE('2020-01-01', 'YYYY-MM-DD')`처럼 형식을 직접 지정한다.
+
+</details>
+
+</details>
