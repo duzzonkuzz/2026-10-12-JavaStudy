@@ -1,5 +1,4 @@
 package com.sist.lang;
-
 /*
  *    Object 
  *    = 모든 클래스에 상속을 내린다 (최상위)

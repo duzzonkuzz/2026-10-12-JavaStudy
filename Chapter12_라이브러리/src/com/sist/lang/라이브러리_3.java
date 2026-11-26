@@ -52,7 +52,7 @@ public static void main(String[] args) throws Exception {
 	Sawon hong=new Sawon();
 	hong.setSabun(1);
 	hong.setName("홍길동");
-	hong.setName("개발부");
+	hong.setDept("개발부");
 	hong.print();
 	System.out.println("hong메모리주소"+hong);
 	

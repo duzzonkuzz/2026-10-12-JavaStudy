@@ -47,7 +47,13 @@ class Human
 		return false;
 	}
 	// String => == (주소 비교) , equals (실제 문자열 비교)
-	
+
+//	@Override
+//	public boolean equals(Object obj) {
+//		// TODO Auto-generated method stub
+//		return super.equals(obj);
+//	}
+//	
 }
 public class Object_3 {
 
