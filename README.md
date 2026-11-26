@@ -3893,5 +3893,258 @@ SELECT * FROM emp WHERE hiredate LIKE '20%' AND ename LIKE '김%';
 날짜를 `'20/01/01'` 같은 문자열로 비교하는 건 날짜 형식 설정(YY/MM/DD)에 맞춰 자동 변환되기 때문이다. 설정이 다른 환경에서는 `TO_DATE('2020-01-01', 'YYYY-MM-DD')`처럼 형식을 직접 지정한다.
 
 </details>
+<details>
+<summary>04. 내장함수 - 단일행 함수 (11.25)</summary>
 
+#### 연산자 쓰임 (03번 복습)
+
+| 연산자 | 쓰는 곳 |
+|---|---|
+| 비교 `=` | 로그인, 아이디 찾기, 상세보기 |
+| BETWEEN | 페이지 나누기 |
+| IN | 검색 필터 |
+| LIKE `'%값%'` | 검색 |
+
+- `=`는 WHERE에서는 비교, `UPDATE ... SET ename='Hong'`에서는 대입
+- `LIKE '_채%'`: 두 번째 글자가 채 / `LIKE '___'`: 세 글자
+- ORDER BY가 없으면 결과 순서는 보장되지 않는다.
+
+#### 내장함수 종류
+
+| | 단일행 함수 | 집계 함수 (05번) |
+|---|---|---|
+| 처리 단위 | 행마다 하나씩 결과 | 여러 행을 모아서 결과 하나 |
+| 예 | LENGTH, SUBSTR, TO_CHAR | COUNT, SUM, AVG |
+
+직접 만드는 함수(사용자 정의, `CREATE FUNCTION`)는 5장에서 배운다.
+
+#### 문자 함수
+
+| 함수 | 결과 | 쓰임 |
+|---|---|---|
+| `LENGTH('홍길동')` | 3 (글자 수) | |
+| `LENGTHB('홍길동')` | 9 (byte 수, UTF-8에서 한글 1글자 = 3byte) | |
+| `UPPER` / `LOWER` / `INITCAP('king')` | KING / king / King | |
+| `LPAD('KING', 7, '*')` | `***KING` | |
+| `RPAD('KING', 7, '*')` | `KING***` | 아이디 찾기 결과 가리기 (`ho**`) |
+| `RPAD('KING', 3, '*')` | `KIN` (길이보다 짧으면 잘린다) | |
+| `REPLACE('Hello Java', 'Java', 'Oracle')` | `Hello Oracle` | 크롤링 데이터 정리 |
+| `TRIM(' 문자 ')` / `LTRIM` / `RTRIM` | 좌우 / 왼쪽 / 오른쪽 공백 제거 | |
+| `TRIM('H' FROM 'HHHelloHH')` | `ello` (지정한 문자 제거) | |
+| `ASCII('A')` / `CHR(65)` | 65 / `'A'` | |
+| `SUBSTR('Hello', 1, 2)` | `He` (시작 위치, 개수) | |
+| `INSTR('ABCDEDG', 'D', 1, 2)` | 6 (1번부터 찾아서 두 번째 D의 위치) | |
+| `INSTR('ABCDEDG', 'D', -1, 1)` | 6 (뒤에서부터 찾기 = lastIndexOf) | |
+| `CONCAT('Hello ', 'Oracle')` | `Hello Oracle` (문자열 결합 연산자와 같다) | |
+
+- 오라클은 위치가 0이 아니라 **1부터** 시작한다. (Java substring은 0부터)
+- 오라클 CONCAT은 2개만 합칠 수 있다. 검색어 붙이기는 `LIKE '%' || 값 || '%'` (MySQL은 `CONCAT('%', 값, '%')`)
+- 자주 쓰는 것: LENGTH, SUBSTR, INSTR, RPAD, REPLACE
+
+#### 숫자 함수
+
+| 함수 | 결과 |
+|---|---|
+| `MOD(5, 2)` | 1 (나머지, Java의 %) |
+| `ROUND(123.5678, 2)` | 123.57 (반올림) |
+| `TRUNC(123.5678, 2)` | 123.56 (버림) |
+| `CEIL(123.1)` | 124 (올림) |
+
+```sql
+SELECT CEIL(COUNT(*) / 10.0) FROM book;     -- 총 페이지 수
+```
+
+#### 날짜 함수
+
+| 함수 | 결과 |
+|---|---|
+| `SYSDATE` | 현재 날짜 + 시간 |
+| `SYSDATE + 1` / `SYSDATE - 1` | 내일 / 어제 (날짜에 숫자를 더하면 일 단위) |
+| `MONTHS_BETWEEN(SYSDATE, hiredate)` | 두 날짜 사이의 개월 수 (실수) |
+| `ADD_MONTHS(날짜, 7)` | 7개월 뒤 (적금, 보험 만기) |
+| `LAST_DAY(SYSDATE)` | 이번 달 마지막 날 |
+| `NEXT_DAY(SYSDATE, '목')` | 다음 목요일 |
+
+```sql
+SELECT ename, TRUNC(MONTHS_BETWEEN(SYSDATE, hiredate) / 12) "근속연수" FROM emp;
+```
+
+#### 변환 함수
+
+| 함수 | 변환 |
+|---|---|
+| `TO_CHAR(날짜 또는 숫자, '형식')` | → 문자 |
+| `TO_DATE('26/11/25', 'YY/MM/DD')` | 문자 → 날짜 (예약) |
+| `TO_NUMBER('10')` | 문자 → 숫자 (Integer.parseInt) |
+
+```sql
+TO_CHAR(hiredate, 'YYYY-MM-DD HH24:MI:SS')   -- 2026-11-25 15:08:00
+TO_CHAR(hiredate, 'YYYY"년" MM"월" DD"일"')   -- 글자는 큰따옴표로 감싼다
+TO_CHAR(hiredate, 'DAY')                      -- 요일
+TO_CHAR(sal, 'L999,999,999')                  -- ₩3,400,000 (L = 지역 통화 기호)
+```
+
+날짜 형식: YYYY(년) MM(월) DD(일) HH / HH24(시) MI(분) SS(초). 분이 MM이 아니라 MI인 점이 Java와 다르다.
+
+#### 기타 함수: NVL, CASE, DECODE
+
+```sql
+SELECT ename, sal + NVL(comm, 0) FROM emp;          -- NULL이면 0으로
+SELECT ename, NVL(TO_CHAR(comm), '없음') FROM emp;   -- 바꿀 값은 컬럼과 같은 데이터형이어야 해서 문자로 변환
+
+SELECT ename, deptno,
+       CASE
+           WHEN deptno = 10 THEN '영업부'
+           WHEN deptno = 20 THEN '개발부'
+           ELSE '신입'
+       END AS dname
+FROM emp;
+
+SELECT ename, DECODE(deptno, 10, '영업부', 20, '개발부', '신입') AS dname
+FROM emp;
+```
+
+| | CASE | DECODE |
+|---|---|---|
+| 비교 | 모든 조건 (`>=`, BETWEEN 등) | 값이 같은지만 |
+| 가독성 | 좋다 | 길어지면 읽기 어렵다 |
+| Java로 치면 | if ~ else if | switch |
+
+</details>
+
+<details>
+<summary>05. 집계 함수, 순위 (11.25)</summary>
+
+여러 행을 모아서 결과 하나를 낸다. (컬럼 단위)
+
+| 함수 | 결과 | 쓰임 |
+|---|---|---|
+| `COUNT(*)` | 행 개수 (NULL 포함) | 로그인, 아이디 중복 확인, 검색 결과 건수 |
+| `COUNT(컬럼)` | NULL을 뺀 개수 | |
+| `COUNT(DISTINCT 컬럼)` | 중복을 뺀 개수 | |
+| `SUM` / `AVG` | 합계 / 평균 | |
+| `MAX` / `MIN` | 최대 / 최소 | `MAX(no) + 1`로 새 번호 만들기 |
+
+```sql
+SELECT COUNT(*) FROM emp;                          -- 전체 사원 수
+SELECT COUNT(comm) FROM emp;                       -- 성과급 받는 사원 수
+SELECT COUNT(DISTINCT deptno) FROM emp;            -- 부서 개수
+SELECT TO_CHAR(AVG(sal), '9,999,999') FROM emp;    -- 평균 급여
+SELECT MIN(sal), MAX(sal) FROM emp;
+```
+
+- 집계 함수와 일반 컬럼은 같이 SELECT할 수 없다. (`SELECT ename, MAX(sal)` → 에러) 같이 쓰려면 GROUP BY로 묶는다.
+- `TO_CHAR(AVG(sal))`처럼 집계 결과에 단일행 함수를 씌우는 건 된다.
+
+#### 순위
+
+```sql
+SELECT ename, sal, RANK() OVER (ORDER BY sal DESC) AS rank FROM emp;
+SELECT ename, sal, DENSE_RANK() OVER (ORDER BY sal DESC) AS rank FROM emp;
+```
+
+| 함수 | 동점 다음 순위 |
+|---|---|
+| RANK | 1, 2, 2, 4 (건너뜀) |
+| DENSE_RANK | 1, 2, 2, 3 (이어짐) |
+
+`OVER (ORDER BY ...)`로 무엇 기준의 순위인지 정한다.
+
+</details>
+
+<details>
+<summary>06. 자바 - 오라클 연동 JDBC (11.25)</summary>
+
+#### 구조
+
+| 클래스 | 역할 |
+|---|---|
+| EmpVO, DeptVO | 테이블 한 행을 담는 클래스 (컬럼 = 변수) |
+| EmpDAO | 오라클 연결, SQL 전송 (Data Access Object) |
+| Login, EmpList | 화면 (JPanel) |
+| UserMain | CardLayout으로 로그인 화면 → 목록 화면 전환 |
+
+```java
+@Data
+public class EmpVO {
+    private int empno, comm, sal, deptno;   // NUMBER → int
+    private String ename, job;              // VARCHAR2 → String
+    private Date hiredate;                  // DATE → java.util.Date
+}
+```
+
+#### EmpDAO
+
+```java
+public class EmpDAO {
+    private Connection conn;                // 연결
+    private PreparedStatement ps;           // SQL 송수신
+    private static EmpDAO dao;
+    private final String URL = "jdbc:oracle:thin:@localhost:1521:XE";
+
+    public EmpDAO() {                       // 드라이버 등록은 한 번만
+        Class.forName("oracle.jdbc.driver.OracleDriver");
+    }
+    public void getConnection() {
+        conn = DriverManager.getConnection(URL, "hr", "happy");
+    }
+    public void disConnection() {
+        if (ps != null) ps.close();
+        if (conn != null) conn.close();
+    }
+    public static EmpDAO newInstance() {    // 싱글턴: 객체를 하나만 만들어서 계속 재사용
+        if (dao == null) dao = new EmpDAO();
+        return dao;
+    }
+
+    public List<EmpVO> empAllData() {
+        List<EmpVO> list = new ArrayList<EmpVO>();
+        try {
+            getConnection();                                       // 1. 연결
+            String sql = "SELECT empno, ename, job, hiredate, deptno "
+                       + "FROM emp "                               //    줄 끝 공백이 없으면 "empFROM"처럼 붙어서 에러
+                       + "ORDER BY hiredate";                      // 2. SQL (끝에 ; 없음)
+            ps = conn.prepareStatement(sql);                       // 3. 전송
+            ResultSet rs = ps.executeQuery();                      // 4. 결과 받기
+            while (rs.next()) {                                    // 5. 한 행씩 VO에 담아서 List에 추가
+                EmpVO vo = new EmpVO();
+                vo.setEmpno(rs.getInt(1));
+                vo.setEname(rs.getString(2));
+                vo.setHiredate(rs.getDate(4));
+                list.add(vo);
+            }
+            rs.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            disConnection();                                       // 6. 에러가 나도 반드시 닫기
+        }
+        return list;
+    }
+}
+```
+
+#### PreparedStatement와 `?`
+
+```java
+String sql = "SELECT ename FROM emp WHERE empno = ?";
+ps = conn.prepareStatement(sql);    // SQL을 먼저 보내고
+ps.setInt(1, empno);                // ?에 값을 나중에 채운다 (첫 번째 ? = 1, 0이 아니라 1부터)
+ResultSet rs = ps.executeQuery();
+```
+
+값을 SQL 문자열에 직접 이어 붙이지 않아서 SQL Injection(입력값으로 SQL을 조작하는 해킹)을 막는다.
+
+#### 로그인 처리
+
+```java
+public String isLogin(int empno, String ename) {
+    // 1) SELECT COUNT(*) FROM emp WHERE empno = ?  → 0이면 "NOSABUN"
+    // 2) SELECT ename FROM emp WHERE empno = ?     → 입력한 이름과 같으면 "OK", 다르면 "NONAME"
+}
+```
+
+화면(UserMain)은 결과 문자열에 따라 메시지를 띄우고, OK면 `dao.empAllData()`로 목록을 받아서 테이블에 넣은 뒤 `card.show(getContentPane(), "LIST")`로 화면을 바꾼다.
+
+</details>
 </details>
