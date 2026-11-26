@@ -4147,4 +4147,157 @@ public String isLogin(int empno, String ename) {
 화면(UserMain)은 결과 문자열에 따라 메시지를 띄우고, OK면 `dao.empAllData()`로 목록을 받아서 테이블에 넣은 뒤 `card.show(getContentPane(), "LIST")`로 화면을 바꾼다.
 
 </details>
+<details>
+<summary>07. 데이터베이스 기본 개념 (11.26)</summary>
+
+| 용어 | 뜻 |
+|---|---|
+| 데이터베이스 | 데이터를 체계적으로 저장하고 관리하는 공간 |
+| DBMS | 데이터베이스를 만들고 저장, 조회, 수정, 삭제, 보안, 백업, 동시성 제어를 하는 소프트웨어 |
+| RDBMS | 데이터를 테이블로 저장하고 테이블 간 관계를 관리하는 DBMS (오라클, MySQL). 중복을 줄이고 무결성 규칙으로 일관성을 지킨다 |
+
+#### 데이터 종류
+
+| 종류 | 예 |
+|---|---|
+| 정형 | 오라클, MySQL 테이블에 저장된 데이터 |
+| 반정형 | 구분은 되어 있는 데이터: HTML, XML, JSON |
+| 비정형 | txt, pdf, 이미지 → 가공해서 필요한 것만 데이터베이스에 저장 |
+
+#### 오라클이 SQL을 처리하는 순서
+
+SQL 작성 → 파싱 (문법, 권한 확인) → 실행 → 결과 반환
+
+`SELECT *`는 필요 없는 컬럼까지 읽어서 느려진다. 실무에서는 필요한 컬럼만 적는다.
+
+</details>
+
+<details>
+<summary>08. GROUP BY, HAVING (11.26)</summary>
+
+```sql
+SELECT 그룹 컬럼, 집계 함수
+FROM 테이블
+[WHERE 행 조건]          -- 그룹으로 묶기 전에 행을 걸러낸다
+GROUP BY 그룹 컬럼       -- 같은 값끼리 묶는다
+[HAVING 그룹 조건]        -- 묶은 결과(집계 함수)로 그룹을 걸러낸다
+[ORDER BY 정렬];
+```
+
+| | WHERE | HAVING |
+|---|---|---|
+| 걸러내는 대상 | 행 | 그룹 |
+| 실행 시점 | GROUP BY 전 | GROUP BY 후 |
+| 집계 함수 | 못 쓴다 | 쓴다 |
+
+- SELECT에 쓸 수 있는 건 GROUP BY에 적은 컬럼과 집계 함수뿐이다.
+- HAVING은 보통 GROUP BY와 같이 쓴다. (GROUP BY 없이 쓰면 테이블 전체가 한 그룹)
+- 쓰임: 관리자 페이지 통계 (연도별 매출, 월별 주문 수, 부서별 인건비, 연도별 입사자 수)
+
+#### GROUP BY 예제
+
+```sql
+-- 부서별 인원수, 급여 합계, 평균
+SELECT deptno, COUNT(*) "인원수", SUM(sal) "급여총합", ROUND(AVG(sal)) "평균"
+FROM emp
+GROUP BY deptno
+ORDER BY deptno;
+
+-- 입사 연도별 (함수 결과로도 묶을 수 있다)
+SELECT EXTRACT(YEAR FROM hiredate) "입사년도", COUNT(*) "인원수"
+FROM emp
+GROUP BY EXTRACT(YEAR FROM hiredate)
+ORDER BY 1;
+
+-- 성씨별
+SELECT SUBSTR(ename, 1, 1), COUNT(*) FROM emp GROUP BY SUBSTR(ename, 1, 1);
+
+-- 부서별 + 직위별 (이중 그룹)
+SELECT deptno, job, COUNT(*) FROM emp GROUP BY deptno, job ORDER BY deptno, job DESC;
+
+-- 성과급 받는 사원만 → 부서별 인원, 성과급 합계 (WHERE로 먼저 거르고 묶기)
+SELECT deptno, COUNT(*), SUM(comm)
+FROM emp
+WHERE comm IS NOT NULL
+GROUP BY deptno;
+```
+
+- `GROUP BY hiredate`는 날짜(+시간)가 완전히 같아야 한 그룹이라, 연도나 월로 묶을 때는 EXTRACT나 TO_CHAR를 쓴다.
+- `EXTRACT(YEAR FROM 날짜)`: 숫자로 꺼낸다 (MONTH, DAY도 된다) / `TO_CHAR(날짜, 'YYYY')`: 문자로 꺼낸다
+- 요일 이름(`'DY'`)으로 정렬하면 가나다순이 된다. 월~일 순서로 정렬하려면 `TO_CHAR(hiredate, 'D')` (일요일 = 1)
+- `AVG(comm)`은 NULL을 빼서 성과급 받는 사람끼리의 평균이다. 전체 사원 기준은 `AVG(NVL(comm, 0))`
+- 별칭은 GROUP BY에서도 못 쓴다. 큰따옴표 별칭 `"hire_date"`는 대소문자가 그대로라 ORDER BY에서도 똑같이 `"hire_date"`로 써야 한다.
+
+#### HAVING 예제
+
+```sql
+-- 사원이 10명 이상인 부서
+SELECT deptno, COUNT(*) FROM emp GROUP BY deptno HAVING COUNT(*) >= 10;
+
+-- 평균 급여가 400만 원 이상인 부서
+SELECT deptno, ROUND(AVG(sal)) FROM emp GROUP BY deptno HAVING AVG(sal) >= 4000000;
+
+-- 사원 10명 이상이면서 최고 급여 600만 원 이상
+SELECT deptno, COUNT(*), MAX(sal)
+FROM emp
+GROUP BY deptno
+HAVING COUNT(*) >= 10 AND MAX(sal) >= 6000000;
+
+-- 최고, 최저 급여 차이가 300만 원 이상
+SELECT deptno, MAX(sal) - MIN(sal) FROM emp GROUP BY deptno HAVING MAX(sal) - MIN(sal) >= 3000000;
+
+-- 평균 급여가 350만 ~ 500만 원
+SELECT deptno, ROUND(AVG(sal)) FROM emp GROUP BY deptno HAVING AVG(sal) BETWEEN 3500000 AND 5000000;
+```
+
+</details>
+
+<details>
+<summary>09. JDBC (2) 페이징, 검색 (11.26)</summary>
+
+#### 페이징
+
+```java
+public List<EmpVO> empListData(int page) {
+    getConnection();
+    String sql = "SELECT empno, ename, job, hiredate, sal "
+               + "FROM emp "
+               + "ORDER BY empno "
+               + "OFFSET ? ROWS FETCH NEXT 10 ROWS ONLY";    // ?개 건너뛰고 10개만
+    ps = conn.prepareStatement(sql);
+    ps.setInt(1, (page * 10) - 10);                          // 1페이지 0, 2페이지 10 ...
+    ResultSet rs = ps.executeQuery();
+    // while (rs.next()) → EmpVO에 담아서 list.add
+}
+
+public int empTotalPage() {
+    String sql = "SELECT CEIL(COUNT(*) / 10.0) FROM emp";   // 총 페이지 수
+    ...
+    rs.next();
+    total = rs.getInt(1);
+}
+```
+
+- `OFFSET ? ROWS FETCH NEXT 10 ROWS ONLY`: 오라클 12c부터. MySQL은 `LIMIT 0, 10`
+- Java에서 subList로 자르던 페이지 나누기를 오라클에서 처리해서, 필요한 10개만 가져온다.
+
+#### 검색
+
+```java
+String sql = "SELECT empno, ename, job, hiredate, sal "
+           + "FROM emp "
+           + "WHERE ename LIKE '%' || ? || '%'";     // ? 앞뒤에 %를 붙인다
+ps = conn.prepareStatement(sql);
+ps.setString(1, name);
+```
+
+`'%?%'`처럼 따옴표 안에 넣으면 ?가 그냥 글자로 취급돼서 setString에서 에러가 난다. ?는 따옴표 밖에 두고 `||`로 붙인다.
+
+#### 데이터형 매칭
+
+NUMBER → int (소수가 있으면 double) / CHAR, VARCHAR2, CLOB → String / DATE, TIMESTAMP → java.util.Date
+
+DAO는 테이블 하나당 하나씩 만든다. (EmpDAO, DeptDAO ...)
+
+</details>
 </details>
