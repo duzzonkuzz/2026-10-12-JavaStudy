@@ -4300,4 +4300,212 @@ NUMBER → int (소수가 있으면 double) / CHAR, VARCHAR2, CLOB → String / 
 DAO는 테이블 하나당 하나씩 만든다. (EmpDAO, DeptDAO ...)
 
 </details>
+<details>
+<summary>10. JOIN (11.27)</summary>
+
+#### 왜 쓰나
+
+한 테이블에 다 넣으면 부서명, 근무지 같은 데이터가 행마다 중복된다. 그래서 테이블을 나눠서 저장하고(정규화), 조회할 때 공통 컬럼으로 다시 연결한다.
+
+```
+dept(1) ──< emp(n)                          부서 하나에 사원 여러 명
+customer(1) ──< orders(n) >── (1)book       고객 1명이 여러 번 주문, 책 1권이 여러 번 팔린다
+```
+
+- orders처럼 두 테이블의 PK(custid, bookid)를 FK로 가지고 둘을 이어주는 테이블을 매핑 테이블이라고 한다.
+- 연결하는 컬럼은 이름이 달라도 된다. 저장된 값만 같으면 된다.
+
+#### 종류
+
+| 종류 | 연결 조건 | 예 |
+|---|---|---|
+| 등가 조인 (EQUI JOIN) | `=` | `emp.deptno = dept.deptno` |
+| 비등가 조인 (NON-EQUI JOIN) | BETWEEN, 비교 연산자 | `sal BETWEEN losal AND hisal` |
+| NATURAL JOIN, JOIN USING | 이름이 같은 컬럼끼리 자동으로 `=` | `emp NATURAL JOIN dept` |
+
+여기까지는 INNER JOIN이라 짝이 있는 행만 나온다. (deptno가 NULL인 사원은 빠진다) 짝이 없는 행까지 보려면 OUTER JOIN (11번)
+
+#### 형식: 오라클 조인 / ANSI 조인 (권장, 모든 DB 공통)
+
+```sql
+-- 오라클 조인: FROM에 콤마, 연결 조건은 WHERE
+SELECT empno, ename, dname, loc
+FROM emp e, dept d
+WHERE e.deptno = d.deptno;
+
+-- ANSI 조인: JOIN ~ ON (INNER는 생략 가능)
+SELECT empno, ename, dname, loc
+FROM emp e JOIN dept d
+ON e.deptno = d.deptno;
+
+-- 컬럼명이 같을 때만 (잘 안 쓴다)
+SELECT empno, ename, dname FROM emp NATURAL JOIN dept;
+SELECT empno, ename, dname FROM emp JOIN dept USING (deptno);
+```
+
+- 양쪽에 다 있는 컬럼(deptno)은 `e.deptno`처럼 테이블명이나 별칭을 붙여야 한다. 안 붙이면 "열의 정의가 애매합니다" 에러
+- NATURAL, USING은 반대로 연결 컬럼에 `e.deptno`처럼 붙이면 에러. 그냥 `deptno`
+- 테이블에 별칭을 주면 그 SQL 안에서는 원래 이름(`emp.deptno`) 대신 별칭만 쓸 수 있다.
+
+#### 예제
+
+```sql
+-- 비등가 조인: 급여가 어느 등급 범위에 들어가는지
+SELECT ename, sal, grade
+FROM emp JOIN salgrade
+ON sal BETWEEN losal AND hisal;
+
+-- 테이블 3개: JOIN ~ ON을 이어 붙인다 (오라클 조인은 WHERE에 AND로)
+SELECT ename, dname, loc, grade
+FROM emp JOIN dept ON emp.deptno = dept.deptno
+         JOIN salgrade ON sal BETWEEN losal AND hisal;
+
+SELECT o.orderid, c.name, b.bookname, o.saleprice
+FROM orders o JOIN customer c ON o.custid = c.custid
+              JOIN book b ON o.bookid = b.bookid;
+
+-- 조인 + 검색 조건
+SELECT ename, dname, loc
+FROM emp JOIN dept ON emp.deptno = dept.deptno
+WHERE loc = '수원' AND ename LIKE '황%';
+
+-- 조인 + GROUP BY: 부서명별 사원 수, 평균 급여
+SELECT dname, COUNT(*), ROUND(AVG(sal))
+FROM emp JOIN dept ON emp.deptno = dept.deptno
+GROUP BY dname;
+
+-- emp 전체 컬럼 + dept 일부
+SELECT emp.*, dname, loc FROM emp JOIN dept ON emp.deptno = dept.deptno;
+```
+
+수업에서는 검색 조건을 `ON ... AND loc = '수원'`처럼 ON 뒤에 붙였다. INNER JOIN에서는 WHERE에 써도 결과가 같으니까 연결 조건은 ON, 검색 조건은 WHERE로 나누면 읽기 쉽다. (OUTER JOIN에서는 결과가 달라진다, 11번)
+
+</details>
+
+<details>
+<summary>11. OUTER JOIN, 집합 연산자 (11.27)</summary>
+
+INNER JOIN은 짝이 맞는 행만 나온다. OUTER JOIN은 짝이 없는 행도 남기고 빈 쪽을 NULL로 채운다. (사원이 없는 부서 확인 같은 관리자 페이지)
+
+| 종류 | 결과 |
+|---|---|
+| LEFT OUTER JOIN | 교집합 + 왼쪽 테이블에만 있는 행 |
+| RIGHT OUTER JOIN | 교집합 + 오른쪽 테이블에만 있는 행 |
+| FULL OUTER JOIN | 교집합 + 왼쪽에만 있는 행 + 오른쪽에만 있는 행 (ANSI로만 가능) |
+
+```sql
+-- 모든 부서 + 사원 이름 (사원이 없는 부서는 ename이 NULL)
+SELECT d.deptno, dname, ename
+FROM dept d LEFT OUTER JOIN emp e
+ON d.deptno = e.deptno;
+
+-- 같은 결과: 테이블 순서를 바꾸면 RIGHT
+SELECT d.deptno, dname, ename
+FROM emp e RIGHT OUTER JOIN dept d
+ON e.deptno = d.deptno;
+
+-- 오라클 조인: NULL로 채워질 쪽(데이터가 없는 쪽)에 (+)
+SELECT d.deptno, dname, ename
+FROM dept d, emp e
+WHERE d.deptno = e.deptno(+);
+```
+
+- LEFT, RIGHT는 FROM에서 전부 보여줄 테이블이 어느 쪽에 있는지다. 전부 보여줄 dept가 왼쪽이면 LEFT
+- OUTER는 생략 가능 (`LEFT JOIN`)
+- (+)는 양쪽에 동시에 못 붙인다. 그래서 FULL은 ANSI로만 쓴다.
+
+```sql
+-- 부서별 평균 급여 (사원 없는 부서도 나오고 평균은 NULL)
+SELECT dname, ROUND(AVG(sal))
+FROM dept LEFT JOIN emp ON dept.deptno = emp.deptno
+GROUP BY dname;
+
+-- 사원이 없는 부서 수: 짝이 없어서 emp 쪽이 NULL인 행만 센다
+SELECT COUNT(*)
+FROM dept LEFT JOIN emp ON dept.deptno = emp.deptno
+WHERE empno IS NULL;
+```
+
+- OUTER JOIN으로 부서별 사원 수를 셀 때는 `COUNT(empno)`. 사원이 없는 부서도 NULL 행이 하나 생겨서 `COUNT(*)`는 1이 나온다.
+- 조건을 ON에 쓰는지 WHERE에 쓰는지에 따라 결과가 다르다.
+
+```sql
+SELECT dname, ename
+FROM dept d LEFT JOIN emp e
+ON d.deptno = e.deptno AND e.job = '과장';    -- 모든 부서 출력, 과장이 없는 부서는 ename NULL
+
+SELECT dname, ename
+FROM dept d LEFT JOIN emp e
+ON d.deptno = e.deptno
+WHERE e.job = '과장';                          -- 과장이 있는 부서만 (INNER JOIN과 같아진다)
+```
+
+#### 집합 연산자
+
+SELECT 결과 두 개를 위아래로 합친다. (JOIN은 옆으로 붙인다)
+
+aaa: 1 2 3 4 5 / bbb: 4 5 6 7 8
+
+| 연산자 | 결과 |
+|---|---|
+| UNION | 1 ~ 8 (중복 제거) |
+| UNION ALL | 1 2 3 4 5 4 5 6 7 8 (중복 그대로, 중복 검사를 안 해서 더 빠르다) |
+| INTERSECT | 4 5 |
+| bbb MINUS aaa | 6 7 8 |
+
+```sql
+SELECT no FROM aaa
+UNION ALL
+SELECT no FROM bbb;
+```
+
+위아래 SELECT의 컬럼 개수와 데이터형이 같아야 한다. ORDER BY는 맨 마지막에 한 번만 쓴다.
+
+</details>
+
+<details>
+<summary>12. JDBC (3) 조인 결과 VO에 담기 (11.27)</summary>
+
+조인하면 emp 컬럼과 dept 컬럼이 같이 온다. EmpVO 안에 DeptVO를 넣어서(포함 클래스) 받는다.
+
+```java
+@Data
+public class DeptVO {
+    private int deptno;
+    private String dname, loc;
+}
+
+@Getter @Setter
+public class EmpVO {
+    private int empno, deptno, sal, comm;
+    private String ename, job;
+    private Date hiredate;
+    private DeptVO dvo = new DeptVO();   // new를 안 하면 getDvo()가 null → NullPointerException
+}
+```
+
+```java
+String sql = "SELECT empno, ename, job, hiredate, sal, dname, loc "
+           + "FROM emp JOIN dept "
+           + "ON emp.deptno = dept.deptno "
+           + "ORDER BY empno ASC";
+...
+while (rs.next()) {
+    EmpVO vo = new EmpVO();
+    vo.setEmpno(rs.getInt(1));
+    vo.setEname(rs.getString(2));
+    ...
+    vo.getDvo().setDname(rs.getString(6));   // dept 컬럼은 DeptVO에
+    vo.getDvo().setLoc(rs.getString(7));
+    list.add(vo);
+}
+
+// 꺼낼 때
+System.out.println(vo.getEname() + " " + vo.getDvo().getDname() + " " + vo.getDvo().getLoc());
+```
+
+- `rs.getXxx(번호)`의 번호는 SELECT에 적은 컬럼 순서다. (1부터)
+- INNER JOIN이라 부서가 없는 사원은 목록에서 빠진다. 전부 보여줘야 하면 LEFT JOIN
+
+</details>
 </details>
